@@ -4,8 +4,6 @@ source("R/01_startup.R")
 library(cancensus)
 library(osmdata)
 
-View(cancensus::list_census_regions("CA16"))
-cancensus::list_census_vectors("CA16")
 
 # Montreal DAs ------------------------------------------------------------
 
@@ -92,13 +90,6 @@ CT <-
   as_tibble() %>% 
   st_as_sf(agr = "constant")
 
-# Download permit dataset -------------------------------------------------------------
-
-permits <-
-  read_sf("data/permis-construction/permis-construction.shp") %>%
-  st_transform(32618) %>%
-  as_tibble() %>%
-  st_as_sf()
 
 
 # Montreal boroughs -------------------------------------------------------
