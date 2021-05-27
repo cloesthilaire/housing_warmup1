@@ -11,12 +11,18 @@ permits_raw <-
   as_tibble() %>%
   st_as_sf()
 
+
+# Keep only the required fields -------------------------------------------------------------
+
 permits <- 
   permits_raw %>% 
   select(-c(longitude:loc_y)) %>% 
   set_names(c("no_demande", "id", "start_date", "issued_date",
               "address", "borough", "type", "description", "category1",
               "category2", "text", "nb_dwellings", "geometry"))
+
+
+# Clean the description and categories field for consistent naming --------------------------
 
 permits <- 
   permits %>% 
@@ -68,32 +74,45 @@ permits <-
   mutate(category1 = ifelse(str_detect(category1, "Parc|PARC"), "Parcs et espaces verts", category1)) %>% 
   mutate(category1 = ifelse(str_detect(category1, "VACANT|Vacant"), "Terrain vacant", category1)) 
 
-permits1 <- 
+permits <- 
   permits %>% 
   mutate(category2 = ifelse(str_detect(category2, "4 à 8 logements|4 Logements|Multifamilial|(4logs)|(5à11logs)|multifamilial|quadruplex|Multi|5 à 11 Logements|12 Logements +|8 à 12 Logements|Condominium|Condos|36 logements et plus|12 à 36 logements"), "Multifamilial", category2)) %>% 
-  mutate(category2 = ifelse(str_detect(category2, "Commercial|Commer léger|commercial|Commerce|commerce|Bureaux|Bureau|bureau|commerciaux|C1 Léger"), "Commercial", category2)) %>% 
+  mutate(category2 = ifelse(str_detect(category2, "Commercial|Commer léger|commercial|Commerce|commerce|Bureaux|Bureau|bureau|commerciaux|C1 Léger|prohibés"), "Commercial", category2)) %>% 
   mutate(category2 = ifelse(str_detect(category2, "1 Logement|Unifamilial|unifamilial|Bungalow|Cottage"), "Unifamilial", category2)) %>% 
-  mutate(category2 = ifelse(str_detect(category2, "Garage|accessoire|garage|Remise|Abri"), "Garage/Bat. Access.", category2)) %>% 
-  mutate(category2 = ifelse(str_detect(category2, "Bifamilial|Trifamilial|Trif|Bif|2 Logements|Jumelée|3 Logements|trifamilial|(3logs)|Duplex|Triplex"), "Bi- et trifamilial", category2)) %>% 
+  mutate(category2 = ifelse(str_detect(category2, "Garage|accessoire|garage|Remise|Abri|Dépendance"), "Garage/Bat. Access.", category2)) %>% 
+  mutate(category2 = ifelse(str_detect(category2, "Bifamilial|Trifamilial|Trif|Bif|2 Logements|Jumelée|3 Logements|trifamilial|(3logs)|Duplex|Triplex|Unif. avec log. au sous-sol"), "Bi- et trifamilial", category2)) %>% 
   mutate(category2 = ifelse(str_detect(category2, "Culte|culte"), "Culte", category2)) %>% 
-  mutate(category2 = ifelse(str_detect(category2, "pétroliers|industrie|Industrie|lourd|Manufactu|exploitation"), "Industriel", category2)) %>% 
+  mutate(category2 = ifelse(str_detect(category2, "pétroliers|industrie|Industrie|lourd|Manufactu|exploitation|I6 Primaire et de récupération"), "Industriel", category2)) %>% 
   mutate(category2 = ifelse(str_detect(category2, "communautaire|Communautaire|civil"), "Communautaire", category2)) %>% 
   mutate(category2 = ifelse(str_detect(category2, "École|Université|Enseignement|Collegial|Collégial|enseignement|Garderie"), "Scolaire et garderie", category2)) %>% 
   mutate(category2 = ifelse(str_detect(category2, "gouvernemental|gouv|municipal|Gouv"), "Gouvernemental", category2)) %>% 
   mutate(category2 = ifelse(str_detect(category2, "Institu|institu|Administration"), "Institutionnel", category2)) %>% 
   mutate(category2 = ifelse(str_detect(category2, "Personnes agées|retraite|résidence|personnes âgées"), "Retraite", category2)) %>% 
   mutate(category2 = ifelse(str_detect(category2, "Mixte|mixte|multiple|Résid. & Comm."), "Mixte", category2)) %>%
-  mutate(category2 = ifelse(str_detect(category2, "Parc|parc|Berge|Golf|conservation (p4)"), "Parcs et espaces verts", category2)) %>%
+  mutate(category2 = ifelse(str_detect(category2, "Parc|parc|Berge|Golf|conservation|Conservation"), "Parcs et espaces verts", category2)) %>%
   mutate(category2 = ifelse(str_detect(category2, "Vacant|vacant|VACANT"), "Terrains et lots vacants", category2)) %>%
-  mutate(category2 = ifelse(str_detect(category2, "publics|public|loisir|récréa|Récréation|sportif|récréation|PUBLIC"), "Public et recreatif", category2)) %>% 
+  mutate(category2 = ifelse(str_detect(category2, "publics|public|loisir|récréa|Récréation|sportif|récréation|PUBLIC|Publique"), "Public et recreatif", category2)) %>% 
   mutate(category2 = ifelse(str_detect(category2, "alcool|Restauration|restauration"), "Restaurants et bars", category2)) %>% 
   mutate(category2 = ifelse(str_detect(category2, "Agricole|agriculture"), "Agricole", category2)) %>% 
   mutate(category2 = ifelse(str_detect(category2, "hébergement|chambre|d'héb"), "Centres hebergement", category2)) %>% 
-  mutate(category2 = ifelse(str_detect(category2, "Batiments en hauteur >6 étages|Résidentiel|Habitation collective|chalet|Residentiel"), "Residentiel, general", category2)) %>% 
-  mutate(category2 = ifelse(str_detect(category2, "Santé|hospitalier"), "Sante et hopitaux", category2)) %>% 
-  mutate(category2 = ifelse(str_detect(category2, "Piscine|paysager"), "Amenagements exterieurs", category2)) %>% 
+  mutate(category2 = ifelse(str_detect(category2, "Batiments en hauteur >6 étages|Résidentiel|Habitation collective|chalet|Residentiel|Familiale|Maison mobile"), "Residentiel, general", category2)) %>% 
+  mutate(category2 = ifelse(str_detect(category2, "Santé|hospitalier"), "Sante et hopitaux", category2)) %>%
+  mutate(category2 = ifelse(str_detect(category2, "Permis ancien système"), "Permis expires", category2)) %>%
+  mutate(category2 = ifelse(str_detect(category2, "Cour de triage|Structure/Fondations"), "Infrastructures", category2)) %>%
+  mutate(category2 = ifelse(str_detect(category2, "I1 Recherche et développement|Entrepreneur général|conservation (p4)|artériel léger|Utilité légère|Catégorisé|Atelier spécialisé|Voisinage|Quartier|Légère|Prestige|Lourde|artériel léger (c3)|Utilité légère (u1)|Collective|À VENIR"), "Transformations et renovations", category2)) %>%
+  mutate(category2 = ifelse(str_detect(category2, "Fabrication et assemblage|Urbain|Non catégorisé|Ateliers"), "Construction et demolition", category2)) %>% 
+  mutate(category2 = ifelse(str_detect(category2, "Piscine|paysager|contraignant|habitation collective"), "Amenagements exterieurs", category2)) %>% 
   mutate(category2 = ifelse(str_detect(category2, "détail|Vente|services|Services"), "Services et commerce au detail", category2)) %>% 
-  mutate(category2 = ifelse(str_detect(category2, "Carburant|essence|Pétrolier|Transport|véhicule|Hotel|Véhicule|station-service"), "Transport et auxiliaires", category2))
+  mutate(category2 = ifelse(str_detect(category2, "Carburant|essence|Pétrolier|Transport|véhicule|Hotel|Véhicule|station-service|Stationnnement|Stationnement|Recherche et développement"), "Transport et auxiliaires", category2))
 
 
-unique(permits1$category2)
+# Clean the description and categories field for consistent naming --------------------------
+
+permits %>% 
+  mutate(conversion = ifelse(str_detect(str_to_lower(text), "conver") & str_detect(str_to_lower(text), "copropri"), TRUE, FALSE)) %>% 
+  View()
+
+
+
+
+
