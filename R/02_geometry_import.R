@@ -24,9 +24,10 @@ DA <-
   select(-c(`Shape Area`:Households, CSD_UID:`Area (sq km)`)) %>% 
   set_names(c("dwellings", "GeoUID", "parent_condo", "condo", "parent_tenure", 
               "renter", "parent_thirty", "p_thirty_renter", "parent_repairs", "major_repairs",
-              "median_rent", "average_value_dwellings", "vm", "parent_vm", "immigrants", "parent_immigrants", "mobility_one_year",
+              "median_rent", "average_value_dwellings", "unsuitable_housing", "parent_unsuitable", 
+              "vm", "parent_vm", "immigrants", "parent_immigrants", "mobility_one_year",
               "parent_mobility_one_year", "mobility_five_years", "parent_mobility_five_years", 
-              "unsuitable_housing", "parent_unsuitable", "median_HH_income_AT", "p_low_income_AT",
+              "median_HH_income_AT", "p_low_income_AT",
               "parent_aboriginal", "aboriginal", "bachelor_above", "parent_education",
               "geometry")) %>% 
   mutate(p_condo = condo / parent_condo,
@@ -67,12 +68,13 @@ CT <-
     geo_format = "sf") %>% 
   st_transform(32618) %>% 
   select(-c(Type, Households, `Adjusted Population (previous Census)`:CSD_UID, PR_UID:`Area (sq km)`)) %>% 
-  set_names(c("dwellings", "GeoUID", "parent_condo", "condo", "parent_tenure", 
+  set_names(c("GeoUID", "dwellings", "parent_condo", "condo", "parent_tenure", 
               "renter", "parent_thirty", "p_thirty_renter", "parent_repairs", "major_repairs",
-              "median_rent", "average_value_dwellings", "vm", "parent_vm", "immigrants", "parent_immigrants", "mobility_one_year",
+              "median_rent", "average_value_dwellings", "unsuitable_housing", "parent_unsuitable",
+              "vm", "parent_vm", "immigrants", "parent_immigrants", "mobility_one_year",
               "parent_mobility_one_year", "mobility_five_years", "parent_mobility_five_years", 
-              "unsuitable_housing", "parent_unsuitable", "median_HH_income_AT", "p_low_income_AT",
-              "parent_aboriginal", "aboriginal", "bachelor_above", "parent_education",
+              "median_HH_income_AT", "p_low_income_AT", "parent_aboriginal",
+              "aboriginal", "bachelor_above", "parent_education",
               "geometry")) %>% 
   mutate(p_condo = condo / parent_condo,
          p_renter = renter / parent_tenure, 
@@ -90,6 +92,12 @@ CT <-
   as_tibble() %>% 
   st_as_sf(agr = "constant")
 
+# Quebec province ---------------------------------------------------------
+
+province <- 
+  get_census("CA16", regions = list(PR = "24"), geo_format = "sf") %>% 
+  st_transform(32618) %>% 
+  select(geometry)
 
 
 # Montreal boroughs -------------------------------------------------------
@@ -128,14 +136,50 @@ city <-
   smoothr::fill_holes(400)
 
 
-# Unite evaluation fonciere --------------
+# Unite evaluation fonciere -----------------------------------------------
 
-uef_raw <-
-  read_sf("data/uniteevaluationfonciere/uniteevaluationfonciere.shp") %>%
-  st_transform(32618)
+# uef_raw <-
+#   read_sf("data/uniteevaluationfonciere/uniteevaluationfonciere.shp") %>%
+#   st_transform(32618)
 
+
+# Streets -----------------------------------------------------------------
+
+streets <- 
+  (getbb("Région administrative de Montréal") * c(1.01, 0.99, 0.99, 1.01)) %>% 
+  opq(timeout = 200) %>% 
+  add_osm_feature(key = "highway") %>% 
+  osmdata_sf()
+
+streets <-
+  rbind(
+    streets$osm_polygons %>% st_set_agr("constant") %>% st_cast("LINESTRING"), 
+    streets$osm_lines) %>% 
+  as_tibble() %>% 
+  st_as_sf() %>% 
+  st_transform(32618) %>%
+  st_set_agr("constant") %>%
+  st_intersection(city)
+
+streets <- 
+  streets %>% 
+  filter(highway %in% c("primary", "secondary")) %>% 
+  select(osm_id, name, highway, geometry)
+
+downtown_poly <- 
+  st_polygon(list(matrix(c(607000, 5038000,
+                           614000, 5038000,
+                           614000, 5045000,
+                           607000, 5045000,
+                           607000, 5038000), 
+                         ncol = 2, byrow = TRUE))) %>% 
+  st_sfc(crs = 32618)
+
+streets_downtown <- 
+  streets %>% 
+  st_intersection(downtown_poly)
 
 # Save output -------------------------------------------------------------
 
-save(DA, CT,   
+save(DA, CT, boroughs, boroughs_raw, province, city, streets, streets_downtown,   
      file = "output/geometry.Rdata")
