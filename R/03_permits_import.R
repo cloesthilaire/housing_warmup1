@@ -110,68 +110,16 @@ permits <-
   mutate(category2 = ifelse(str_detect(category2, "Carburant|essence|Pétrolier|Transport|véhicule|Hotel|Véhicule|station-service|Stationnnement|Stationnement|Recherche et développement"), "Transport et auxiliaires", category2))
 
 
+# Clean the text field so it is all lowercase and without accents ---------------------------
+
+text_processed <- str_to_lower(permits$text)
+text_processed <- stringi::stri_trans_general(text_processed, "Latin-ASCII") 
+
+permits <- 
+  permits %>% 
+  mutate(text = text_processed)
+
+
+# Save output -------------------------------------------------------------------------------
+
 save(permits, file = "output/permits.Rdata")
-
-# Clean the description and categories field for consistent naming --------------------------
-
-# Condo conversions
-permits %>% 
-  select(-borough) %>% 
-  mutate(conversion = ifelse(str_detect(str_to_lower(text), "conver") & str_detect(str_to_lower(text), "copropri"), TRUE, FALSE)) %>%
-  mutate(conversion = ifelse(str_detect(str_to_lower(text), "transfo") & str_detect(str_to_lower(text), "copropri"), TRUE, conversion)) %>%
-  mutate(issued_date = floor_date(issued_date, "year")) %>%
-  filter(conversion==TRUE) %>%
-  st_join(boroughs_raw, .) %>% 
-  group_by(borough, issued_date) %>% 
-  summarize(number_conversion=sum(n())) %>% 
-  ggplot()+
-  geom_sf(data=boroughs_raw)+
-  geom_sf(aes(fill=number_conversion))+
-  scale_fill_stepsn(name="Number of conversions",
-                    n.breaks = 5,
-                    colours = col_palette[c(5,3,4,1,2,9)],
-                    guide = "coloursteps",
-                    na.value = "grey50")+
-  theme_void()+
-  facet_wrap(~issued_date)
-
-# Combining of two units into one
-permits %>% 
-  select(-borough) %>% 
-  filter(nb_dwellings <0) %>% 
-  mutate(combining = ifelse(str_detect(str_to_lower(text), "transformer"), TRUE, FALSE)) %>%
-  mutate(combining = ifelse(str_detect(str_to_lower(text), "réunir") & str_detect(str_to_lower(text), "reunir"), TRUE, combining)) %>%
-  filter(combining==TRUE) %>% 
-  filter(issued_date >="2000-01-01") %>% 
-  mutate(issued_date = floor_date(issued_date, "year")) %>%
-  filter(!is.na(issued_date)) %>% 
-  st_join(boroughs_raw, .) %>% 
-  group_by(borough, issued_date) %>% 
-  summarize(number_combining=sum(n())) %>% 
-  ggplot()+
-  geom_sf(data=boroughs_raw)+
-  geom_sf(aes(fill=number_combining))+
-  scale_fill_stepsn(name= "Number of combining",
-                    n.breaks = 5,
-                    colours = col_palette[c(5,3,4,1,2,9)],
-                    guide = "coloursteps",
-                    na.value = "grey50")+
-  theme_void()+
-  facet_wrap(~issued_date)
-
-permits %>% 
-  filter(type == "CO") %>% 
-  filter(category1 == "Residentiel") %>% 
-  filter(!is.na(geometry)) %>% 
-  filter(nb_dwellings >= 50) %>% 
-  View()
-  # mutate(issued_date = floor_date(issued_date, "year")) %>% 
-  # ggplot()+
-  # geom_sf(data=boroughs_raw, fill=NA)+
-  # geom_sf(aes(size=nb_dwellings))+
-  # theme_void()+
-  # facet_wrap(~issued_date)
-
-
-
-
