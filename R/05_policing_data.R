@@ -9,7 +9,7 @@ load("output/int.Rdata")
 
 library(wesanderson)
 
-wes_palette("Zissou1", 6, type = c("continuous"))
+pal <- wes_palette("Zissou1", 10, type = c("continuous"))
 
  
 
@@ -49,7 +49,7 @@ int_PDQ %>%
   geom_sf(aes(fill=number_intervention), color="transparent")+
   theme_void()+
   scale_fill_gradientn(name="Number of interventions",
-                       colors=col_palette[c(4, 1, 9)])+
+                       colors=pal)+
   labs(title="Number of mefaits by PDQ per year")+
   facet_wrap(~DATE)
 
