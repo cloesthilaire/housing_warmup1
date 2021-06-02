@@ -1,5 +1,6 @@
 library(biscale)
 library(scales)
+library(patchwork)
 
 # Set the bivariate color palette
 
@@ -17,35 +18,33 @@ show_col(bivar)
 
 # Prepare the dataset to display in a bivariate choropleth map
 
-NAMEOFYOURNEWBIVARIATE <-
-  bi_class(YOURDATASET, x = FIRSTVARIABLE, y = SECONDVARIABLE, style = "quantile", dim = 3)
+lowincome <-
+  bi_class(na.omit(CT), x = p_low_income_AT, y = p_aboriginal, style = "quantile", dim = 3)
 
 # Plot for the bivariate choropleth map
 
-PLOTNAME <- 
+plot <- 
   ggplot() +
-  geom_sf(data = NAMEOFYOURNEWBIVARIATE, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
+  geom_sf(data = lowincome, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
   bi_scale_fill(pal = bivar, dim = 3) +
   bi_theme()+
   theme(legend.position = "bottom")
 
-PLOTNAME #to see your plot
+plot #to see your plot
 
 # Add bivariate legend
 
 bi_legend <- bi_legend(pal = bivar,
                        dim = 3,
-                       xlab = "NAME OF YOUR FIRST VARIABLE",
-                       ylab = "NAME OF YOUR SECOND VARIABLE",
-                       size = 20)
+                       xlab = "Percentage of low income",
+                       ylab = "Percentage of aboriginal",
+                       size = 8)
 
-PLOTNAMEWITHLEGEND <- ggdraw() +
-  draw_plot(PLOTNAME, 0, 0, 1, 1) +
-  draw_plot(bi_legend, 0.11, 0.11, 0.11, 0.15)
+plotlegend <- plot + inset_element(bi_legend, left = 0, bottom = 0.6, right = 0.4, top = 1)
 
-PLOTNAMEWITHLEGEND
+plotlegend
 
 # Save in PDF in your output/figures folder to see the true sizes of your plot, ajust accordingly
 
-ggsave("output/figures/PLOTNAMEWITHLEGEND.pdf", plot = PLOTNAMEWITHLEGEND, width = 8, 
+ggsave("output/figures/plotlegend.pdf", plot = plotlegend, width = 8, 
        height = 5, units = "in", useDingbats = FALSE)
