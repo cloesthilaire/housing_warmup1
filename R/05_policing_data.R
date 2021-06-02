@@ -57,9 +57,9 @@ int_PDQ %>%
 
 #Vol de vehicule a moteur
 int_PDQ %>% 
-  mutate(DATE = year(DATE)) %>% 
-  filter(DATE != 2021) %>% 
   filter(CATEGORIE == "Vol de vehicule a moteur") %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE != 2021) %>%
   group_by(NOM_PDQ, DATE) %>% 
   summarize(number_intervention = n()) %>% 
   ggplot()+
@@ -67,7 +67,8 @@ int_PDQ %>%
   theme_void()+
   scale_fill_gradientn(name="Number of interventions",
                        colors=col_palette[c(4, 1, 9)])+
-  labs(title="Number of vehicule theft by PDQ per year")
+  labs(title="Number of vehicule theft by PDQ per year")+
+  facet_wrap(~DATE)
 
 #Vols qualifies
 int_PDQ %>% 
@@ -82,6 +83,49 @@ int_PDQ %>%
   scale_fill_gradientn(name="Number of interventions",
                        colors=col_palette[c(4, 1, 9)])+
   labs(title="Number of skilled thefts by PDQ per year")+
+  facet_wrap(~DATE)
+#Vol dans / sur vehicule a moteur
+int_PDQ %>% 
+  filter(CATEGORIE == "Vol dans / sur vehicule a moteur") %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE != 2021) %>% 
+  group_by(NOM_PDQ, DATE) %>% 
+  summarize(number_intervention = n()) %>% 
+  ggplot()+
+  geom_sf(aes(fill=number_intervention), color="transparent")+
+  theme_void()+
+  scale_fill_gradientn(name="Number of interventions",
+                       colors=col_palette[c(4, 1, 9)])+
+  labs(title="Number of thefts of/in motor vehicles by PDQ per year")+
+  facet_wrap(~DATE)
+#Infractions entrainant la mort (NEED TO FIX BORDERS)
+int_PDQ %>% 
+  filter(CATEGORIE == "Infractions entrainant la mort") %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE != 2021) %>% 
+  group_by(NOM_PDQ, DATE) %>% 
+  summarize(number_intervention = n()) %>% 
+  ggplot()+
+  geom_sf(aes(fill=number_intervention), color="transparent")+
+  theme_void()+
+  scale_fill_gradientn(name="Number of interventions",
+                       colors=col_palette[c(4, 1, 9)])+
+  labs(title="Number of offenses causing death by PDQ per year")+
+  facet_wrap(~DATE)
+
+#Introduction
+int_PDQ %>% 
+  filter(CATEGORIE == "Introduction") %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE != 2021) %>% 
+  group_by(NOM_PDQ, DATE) %>% 
+  summarize(number_intervention = n()) %>% 
+  ggplot()+
+  geom_sf(aes(fill=number_intervention), color="transparent")+
+  theme_void()+
+  scale_fill_gradientn(name="Number of interventions",
+                       colors=col_palette[c(4, 1, 9)])+
+  labs(title="Number of break-ins/thefts of firearms in residences by PDQ per year")+
   facet_wrap(~DATE)
 
 #Make map set 2 by year with the facet_wrap (group by PDQ and year)
