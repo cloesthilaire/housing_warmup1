@@ -24,7 +24,7 @@ NAMEOFYOURNEWBIVARIATE <-
 
 PLOTNAME <- 
   ggplot() +
-  geom_sf(data = NAMEOFYOURNEWBIVARIATE mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
+  geom_sf(data = NAMEOFYOURNEWBIVARIATE, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
   bi_scale_fill(pal = bivar, dim = 3) +
   bi_theme()+
   theme(legend.position = "bottom")
