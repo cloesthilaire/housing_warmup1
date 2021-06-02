@@ -2,6 +2,15 @@ library(biscale)
 library(scales)
 library(ggplot2)
 install.packages("ggplot2")
+install.packages("cowplot")
+library(cowplot)
+install.packages("grid")
+library(grid)
+install.packages("gridGraphics")
+library(gridGraphics)
+load("output/geometry.Rdata")
+install.packages("patchwork")
+library(patchwork)
 # Set the bivariate color palette
 
 bivar <- bi_pal_manual(val_1_1 = "#e8e8e8",
@@ -30,21 +39,17 @@ Bivarite_map_lowincome_aboriginal <-
   bi_theme()+
   theme(legend.position = "bottom")
 
-PLOTNAME #to see your plot
+Bivarite_map_lowincome_aboriginal #to see your plot
 
 # Add bivariate legend
 
 bi_legend <- bi_legend(pal = bivar,
                        dim = 3,
-                       xlab = "Percentage low income households",
-                       ylab = "Aboriginal individuals",
-                       size = 20)
+                       xlab = "Percentage of low income",
+                       ylab = "Percentage of aboriginal",
+                       size = 8)
+plotlegend <- plot + inset_element(bi_legend, left = 0, bottom = 0.6, right = 0.4, top = 1)
 
-bi_legend <- ggdraw() +
-  draw_plot(bi_legend, 0, 0, 1, 1) +
-  draw_plot(bi_legend, 0.11, 0.11, 0.11, 0.15)
-
-PLOTNAMEWITHLEGEND
 
 # Save in PDF in your output/figures folder to see the true sizes of your plot, ajust accordingly
 
