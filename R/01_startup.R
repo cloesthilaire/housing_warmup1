@@ -9,6 +9,7 @@ library(strr)
 library(sf)
 library(stringr)
 library(tidyr)
+library(qs)
 
 
 # Set global variables ----------------------------------------------------
