@@ -46,10 +46,6 @@ DA <-
   as_tibble() %>% 
   st_as_sf(agr = "constant")
 
-DA %>% 
-  ggplot()+
-  geom_sf(aes(fill=p_vm), color=NA) 
-
 
 # Montreal CTs ------------------------------------------------------------
 
@@ -91,6 +87,79 @@ CT <-
          p_vm, p_immigrants, p_aboriginal, p_low_income_AT, p_bachelor_above) %>% 
   as_tibble() %>% 
   st_as_sf(agr = "constant")
+
+# Montreal DAs 2006 -------------------------------------------------------
+
+DA_06 <-
+  get_census(
+    dataset = "CA06", regions = list(CSD = c("2466023")), level = "DA",
+    vectors = c("v_CA06_101", "v_CA06_103", "v_CA06_2049", "v_CA06_2051", 
+                "v_CA06_105", "v_CA06_108", "v_CA06_1303", "v_CA06_1302", 
+                "v_CA06_478", "v_CA06_474", "v_CA06_453", "v_CA06_451",
+                "v_CA06_462", "v_CA06_460", "v_CA06_2030", "v_CA06_1981",
+                "v_CA06_1292", "v_CA06_1293", "v_CA06_1257", "v_CA06_1258", "v_CA06_1248",
+                "v_CA06_2050", "v_CA06_2054"),
+    geo_format = "sf") %>% 
+  st_transform(32618) %>% 
+  select(-c(`Shape Area`:`Quality Flags`, CSD_UID:CT_UID, CD_UID:`Area (sq km)`)) %>% 
+  set_names(c("GeoUID", "dwellings", "parent_tenure", "renter", 
+              "parent_repairs", "major_repairs", "parent_thirty", "median_HH_income_AT", "average_gross_rent",
+              "p_thirty_renter", "average_value_dwellings", "vm", "parent_vm", "immigrants", "parent_immigrants",
+              "mobility_one_year", "parent_mobility_one_year", "mobility_five_years", "parent_mobility_five_years", 
+              "p_low_income_AT", "parent_aboriginal", "aboriginal",
+              "bachelor", "above_bachelor", "parent_education",
+              "geometry")) %>% 
+  mutate(bachelor_above = bachelor + above_bachelor,
+         p_renter = renter / parent_tenure, 
+         p_repairs = major_repairs / parent_repairs,
+         p_vm = vm/parent_vm,
+         p_immigrants = immigrants/parent_immigrants,
+         p_mobility_one_year = mobility_one_year/parent_mobility_one_year,
+         p_mobility_five_years = mobility_five_years/parent_mobility_five_years,
+         p_aboriginal = aboriginal/parent_aboriginal,
+         p_bachelor_above = bachelor_above / parent_education) %>% 
+  select(GeoUID, dwellings, renter, average_gross_rent, average_value_dwellings, median_HH_income_AT, p_thirty_renter, 
+         p_renter, p_repairs, p_mobility_one_year, p_mobility_five_years,
+         p_vm, p_immigrants, p_aboriginal, p_low_income_AT, p_bachelor_above) %>% 
+  as_tibble() %>% 
+  st_as_sf(agr = "constant")
+
+# Montreal CTs 2006 -------------------------------------------------------
+
+CT_06 <-
+  get_census(
+    dataset = "CA06", regions = list(CSD = c("2466023")), level = "CT",
+    vectors = c("v_CA06_101", "v_CA06_103", "v_CA06_2049", "v_CA06_2051", 
+                "v_CA06_105", "v_CA06_108", "v_CA06_1303", "v_CA06_1302", 
+                "v_CA06_478", "v_CA06_474", "v_CA06_453", "v_CA06_451",
+                "v_CA06_462", "v_CA06_460", "v_CA06_2030", "v_CA06_1981",
+                "v_CA06_1292", "v_CA06_1293", "v_CA06_1257", "v_CA06_1258", "v_CA06_1248",
+                "v_CA06_2050", "v_CA06_2054"),
+    geo_format = "sf") %>% 
+  st_transform(32618) %>% 
+  select(-c(`Shape Area`:`Quality Flags`, CMA_UID:CSD_UID, PR_UID:`Area (sq km)`)) %>% 
+  set_names(c("GeoUID", "dwellings", "parent_tenure", "renter", 
+              "parent_repairs", "major_repairs", "parent_thirty", "median_HH_income_AT", "average_gross_rent",
+              "p_thirty_renter", "average_value_dwellings", "vm", "parent_vm", "immigrants", "parent_immigrants",
+              "mobility_one_year", "parent_mobility_one_year", "mobility_five_years", "parent_mobility_five_years", 
+              "p_low_income_AT", "parent_aboriginal", "aboriginal",
+              "bachelor", "above_bachelor", "parent_education",
+              "geometry")) %>% 
+  mutate(bachelor_above = bachelor + above_bachelor,
+         p_renter = renter / parent_tenure, 
+         p_repairs = major_repairs / parent_repairs,
+         p_vm = vm/parent_vm,
+         p_immigrants = immigrants/parent_immigrants,
+         p_mobility_one_year = mobility_one_year/parent_mobility_one_year,
+         p_mobility_five_years = mobility_five_years/parent_mobility_five_years,
+         p_aboriginal = aboriginal/parent_aboriginal,
+         p_bachelor_above = bachelor_above / parent_education) %>% 
+  select(GeoUID, dwellings, renter, average_gross_rent, average_value_dwellings, median_HH_income_AT, p_thirty_renter, 
+         p_renter, p_repairs, p_mobility_one_year, p_mobility_five_years,
+         p_vm, p_immigrants, p_aboriginal, p_low_income_AT, p_bachelor_above) %>% 
+  as_tibble() %>% 
+  st_as_sf(agr = "constant")
+
 
 # Quebec province ---------------------------------------------------------
 
