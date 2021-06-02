@@ -41,21 +41,24 @@ int_PDQ %>%
 #Mefait
 int_PDQ %>% 
   mutate(DATE = year(DATE)) %>% 
+  filter(DATE != 2021) %>% 
   filter(CATEGORIE == "Mefait") %>% 
-  group_by(NOM_PDQ, DATE) %>% 
+  group_by(NOM_PDQ, DATE) %>%
   summarize(number_intervention = n()) %>% 
   ggplot()+
   geom_sf(aes(fill=number_intervention), color="transparent")+
   theme_void()+
   scale_fill_gradientn(name="Number of interventions",
                        colors=col_palette[c(4, 1, 9)])+
-  labs(title="Number of mefaits by PDQ per year")
+  labs(title="Number of mefaits by PDQ per year")+
+  facet_wrap(~DATE)
 
 #Facet_wrap crée un graph par catégorie assignée
 
 #Vol de vehicule a moteur
 int_PDQ %>% 
   mutate(DATE = year(DATE)) %>% 
+  filter(DATE != 2021) %>% 
   filter(CATEGORIE == "Vol de vehicule a moteur") %>% 
   group_by(NOM_PDQ, DATE) %>% 
   summarize(number_intervention = n()) %>% 
@@ -70,6 +73,7 @@ int_PDQ %>%
 int_PDQ %>% 
   filter(CATEGORIE == "Vols qualifies") %>% 
   mutate(DATE = year(DATE)) %>% 
+  filter(DATE != 2021) %>% 
   group_by(NOM_PDQ, DATE) %>% 
   summarize(number_intervention = n()) %>% 
   ggplot()+
@@ -77,20 +81,23 @@ int_PDQ %>%
   theme_void()+
   scale_fill_gradientn(name="Number of interventions",
                        colors=col_palette[c(4, 1, 9)])+
-  labs(title="Number of skilled thefts by PDQ per year")
+  labs(title="Number of skilled thefts by PDQ per year")+
+  facet_wrap(~DATE)
 
 #Make map set 2 by year with the facet_wrap (group by PDQ and year)
   int_PDQ %>% 
     mutate(DATE=year(DATE)) %>%
+    filter(DATE != 2021) %>% 
     group_by(NOM_PDQ, DATE) %>% 
     summarize(number_intervention = n()) %>% 
     ggplot()+
     geom_sf(aes(fill=number_intervention))+
-    facet_wrap(~DATE)+
+  
     scale_fill_gradient2(low="green",mid="blue", high="red")+
     theme_void()+
     labs(title="Sum of police interventions per PDQ per year")+
-    labs(fill="Number of interventions")
+    labs(fill="Number of interventions")+
+    facet_wrap(~DATE)
   
 #Geom uses + signs, not pipes 
 #Crimes per PDQ per capita
