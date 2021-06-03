@@ -58,10 +58,10 @@ combined_dwellings <-
   mutate(combining = ifelse(str_detect(text, "transf") & str_detect(text, "garderie"), FALSE, combining)) %>%
   mutate(combining = ifelse(str_detect(text, "transf") & str_detect(text, "hotel"), FALSE, combining)) %>%
   mutate(combining = ifelse(str_detect(text, "transf") & str_detect(text, "bureau"), FALSE, combining)) %>%
-  filter(combining==TRUE) %>% 
-  mutate(issued_date = year(issued_date))
+  filter(combining==TRUE)
 
 combined_dwellings %>% 
+  mutate(issued_date = year(issued_date))
   select(-borough) %>% 
   st_join(boroughs, .) %>% 
   group_by(borough, issued_date) %>% 

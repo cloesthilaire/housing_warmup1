@@ -250,5 +250,5 @@ streets_downtown <-
 
 # Save output -------------------------------------------------------------
 
-save(DA, CT, boroughs, boroughs_raw, province, city, streets, streets_downtown,   
+save(DA, CT, DA_06, CT_06, boroughs, boroughs_raw, province, city, streets, streets_downtown,   
      file = "output/geometry.Rdata")
