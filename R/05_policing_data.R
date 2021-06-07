@@ -117,6 +117,7 @@ total_mefait <-
   filter(CATEGORIE == "Mefait") %>% 
   group_by(NOM_PDQ, DATE) %>%
   summarize(number_mefaits= n()) %>% 
+  #HELP ABOVE HERE CLOÉ. All above works but I can't combine the two datasets---------------------------------
   #not working as of here
   cbind(total_interventions,total_mefait, by=c("NOM_PDQ","DATE"))
   st_combine
