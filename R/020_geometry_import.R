@@ -7,7 +7,7 @@ library(osmdata)
 
 # Montreal DAs ------------------------------------------------------------
 
-View(cancensus::list_census_vectors("CA16"))
+View(cancensus::list_census_regions("CA16"))
 
 DA <-
   get_census(
@@ -21,8 +21,8 @@ DA <-
                 "v_CA16_5123", "v_CA16_5096"),
     geo_format = "sf") %>% 
   st_transform(32618) %>% 
-  select(-c(`Shape Area`:Households, CSD_UID:`Area (sq km)`)) %>% 
-  set_names(c("dwellings", "GeoUID", "parent_condo", "condo", "parent_tenure", 
+  select(-c(`Shape Area`:Households, CSD_UID, CT_UID:`Area (sq km)`)) %>% 
+  set_names(c("dwellings", "GeoUID", "population", "parent_condo", "condo", "parent_tenure", 
               "renter", "parent_thirty", "p_thirty_renter", "parent_repairs", "major_repairs",
               "median_rent", "average_value_dwellings", "unsuitable_housing", "parent_unsuitable", 
               "vm", "parent_vm", "immigrants", "parent_immigrants", "mobility_one_year",
@@ -40,7 +40,7 @@ DA <-
          p_unsuitable = unsuitable_housing/parent_unsuitable,
          p_aboriginal = aboriginal/parent_aboriginal,
          p_bachelor_above = bachelor_above / parent_education) %>% 
-  select(GeoUID, dwellings, renter, median_rent, average_value_dwellings, median_HH_income_AT, p_thirty_renter, p_condo, 
+  select(GeoUID, dwellings, population, renter, median_rent, average_value_dwellings, median_HH_income_AT, p_thirty_renter, p_condo, 
          p_renter, p_repairs, p_mobility_one_year, p_mobility_five_years, p_unsuitable,
          p_vm, p_immigrants, p_aboriginal, p_low_income_AT, p_bachelor_above) %>% 
   as_tibble() %>% 

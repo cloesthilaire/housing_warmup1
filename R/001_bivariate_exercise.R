@@ -18,14 +18,14 @@ show_col(bivar)
 
 # Prepare the dataset to display in a bivariate choropleth map
 
-lowincome <-
-  bi_class(na.omit(CT), x = p_low_income_AT, y = p_aboriginal, style = "quantile", dim = 3)
+BIVARIATE_DATASET_NAME <-
+  bi_class(na.omit(DATASET), x = VARIABLE_X, y = VARIABLE_Y, style = "quantile", dim = 3) #na.omit() is useful when analyses require you to have a dataset free of NA values!
 
 # Plot for the bivariate choropleth map
 
 plot <- 
   ggplot() +
-  geom_sf(data = lowincome, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
+  geom_sf(data = BIVARIATE_DATASET_NAME, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
   bi_scale_fill(pal = bivar, dim = 3) +
   bi_theme()+
   theme(legend.position = "bottom")
@@ -36,15 +36,15 @@ plot #to see your plot
 
 bi_legend <- bi_legend(pal = bivar,
                        dim = 3,
-                       xlab = "Percentage of low income",
-                       ylab = "Percentage of aboriginal",
+                       xlab = "Percentage of VARIABLE_X",
+                       ylab = "Percentage of VARIABLE_Y",
                        size = 8)
 
-plotlegend <- plot + inset_element(bi_legend, left = 0, bottom = 0.6, right = 0.4, top = 1)
+PLOT_FINAL_NAME <- plot + inset_element(bi_legend, left = 0, bottom = 0.6, right = 0.4, top = 1)
 
-plotlegend
+PLOT_FINAL_NAME
 
 # Save in PDF in your output/figures folder to see the true sizes of your plot, ajust accordingly
 
-ggsave("output/figures/plotlegend.pdf", plot = plotlegend, width = 8, 
+ggsave("output/figures/PLOT_FINAL_NAME.pdf", plot = PLOT_FINAL_NAME, width = 8, 
        height = 5, units = "in", useDingbats = FALSE)
