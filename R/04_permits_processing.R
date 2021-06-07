@@ -16,21 +16,6 @@ condo_conversions <-
   filter(conversion==TRUE) %>%
   mutate(issued_date = year(issued_date))
 
-condo_conversions %>% 
-  select(-borough) %>% 
-  st_join(boroughs, .) %>% 
-  group_by(borough, issued_date) %>% 
-  summarize(number_conversion=sum(n())) %>% 
-  ggplot()+
-  geom_sf(data=boroughs)+
-  geom_sf(aes(fill=number_conversion))+
-  scale_fill_stepsn(name="Number of conversions",
-                    n.breaks = 5,
-                    colours = col_palette[c(5,3,4,1,2,9)],
-                    guide = "coloursteps",
-                    na.value = "grey50")+
-  theme_void()+
-  facet_wrap(~issued_date)
 
 # Combining of two units into one ------------------------------------------------------------
 
@@ -58,39 +43,29 @@ combined_dwellings <-
   mutate(combining = ifelse(str_detect(text, "transf") & str_detect(text, "garderie"), FALSE, combining)) %>%
   mutate(combining = ifelse(str_detect(text, "transf") & str_detect(text, "hotel"), FALSE, combining)) %>%
   mutate(combining = ifelse(str_detect(text, "transf") & str_detect(text, "bureau"), FALSE, combining)) %>%
-  filter(combining==TRUE)
-
-combined_dwellings %>% 
+  filter(combining==TRUE) %>%
   mutate(issued_date = year(issued_date))
-  select(-borough) %>% 
-  st_join(boroughs, .) %>% 
-  group_by(borough, issued_date) %>% 
-  summarize(number_combining=sum(nb_dwellings)) %>% 
-  ggplot()+
-  geom_sf(data=boroughs)+
-  geom_sf(aes(fill=number_combining))+
-  scale_fill_stepsn(name="Number of combinations",
-                    n.breaks = 5,
-                    colours = col_palette[c(5,3,4,1,2,9)],
-                    guide = "coloursteps",
-                    na.value = "grey50")+
-  theme_void()+
-  facet_wrap(~issued_date)
 
 
 # Combining of two units into one ------------------------------------------------------------
 
-permits %>% 
+new_construction <- 
+  permits %>% 
   filter(type == "CO") %>% 
   filter(category1 == "Residentiel"| category1 == "Mixte") %>% 
   filter(nb_dwellings >= 10) %>% 
-  View()
-# mutate(issued_date = floor_date(issued_date, "year")) %>% 
-# ggplot()+
-# geom_sf(data=boroughs_raw, fill=NA)+
-# geom_sf(aes(size=nb_dwellings))+
-# theme_void()+
-# facet_wrap(~issued_date)
+  mutate(new_constru = ifelse(str_detect(text, "const") & str_detect(text, "batiment"), TRUE, FALSE)) %>%
+  mutate(new_constru = ifelse(str_detect(text, "const") & str_detect(text, "immeuble"), TRUE, new_constru)) %>% 
+  mutate(new_constru = ifelse(str_detect(text, "const") & str_detect(text, "residence"), TRUE, new_constru)) %>% 
+  mutate(new_constru = ifelse(str_detect(text, "multi") & str_detect(text, "log"), TRUE, new_constru)) %>% 
+  mutate(new_constru = ifelse(str_detect(text, "bat") & str_detect(text, "log"), TRUE, new_constru)) %>% 
+  mutate(new_constru = ifelse(str_detect(text, "batiment") & str_detect(text, "habitation"), TRUE, new_constru)) %>% 
+  mutate(new_constru = ifelse(str_detect(text, "nouve") & str_detect(text, "const"), TRUE, new_constru)) %>% 
+  mutate(new_constru = ifelse(str_detect(text, "condo"), TRUE, new_constru)) %>% 
+  mutate(new_constru = ifelse(str_detect(text, "coop"), TRUE, new_constru)) %>% 
+  filter(new_constru == TRUE) %>%
+  mutate(issued_date = year(issued_date))
+    
 
 
 
