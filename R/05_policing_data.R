@@ -120,12 +120,13 @@ total_mefait <-
 
 total_mefait %>% 
   left_join(., st_drop_geometry(total_interventions), by = c("NOM_PDQ", "DATE")) %>% 
-  mutate(mefait_prop = (number_mefaits/total_number_interventions)*100) %>% 
+  mutate(mefait_prop = number_mefaits/total_number_interventions) %>% 
   ggplot()+
   geom_sf(aes(fill=mefait_prop), color="transparent")+
   theme_void()+
   scale_fill_gradientn(name="Percentage mischief per total crimes(%)",
-                       colors=pal)+
+                       colors=pal,
+                       labels = scales::percent)+
   labs(title="Percentage of mischief out of total crimes by PDQ per year")+
   facet_wrap(~DATE)
 
@@ -144,9 +145,9 @@ total_mefait %>%
   ggplot()+
   geom_sf(aes(fill=mefait_prop_non_discretionary), color="transparent")+
   theme_void()+
-  scale_fill_gradientn(name="Ratios (mischief:less discretionary crime)",
+  scale_fill_gradientn(name="Ratio\n(mischief/\nless discretionary crime)",
                        colors=pal)+
-  labs(title="Ratio of mischief crimes to other less discretionary crimes by PDQ per year")+
+  labs(title="Ratio of mischief crimes to other less\ndiscretionary crimes by PDQ per year")+
   facet_wrap(~DATE)
 
 #Mefaits by PDQ per total mefaits
@@ -166,21 +167,23 @@ library(gmm)
 
 total_mefait_island <-
   int_PDQ %>% 
+  st_drop_geometry() %>% 
   mutate(DATE = year(DATE)) %>% 
   filter(DATE != 2021) %>% 
   filter(CATEGORIE == "Mefait") %>% 
-  group_by(CATEGORIE, DATE) %>%
-  st_buffer(0) %>% 
+  group_by(DATE) %>%
+  #st_buffer(0) %>% 
   summarize(number_mefaits_island= n())
 
 total_mefait %>% 
-  left_join(., st_drop_geometry(total_mefait_island), by = "DATE") %>% 
-  mutate(share_mefait_PDQ_total_mefait = (number_mefaits/number_mefaits_island)*100) %>% 
+  full_join(., total_mefait_island, by = "DATE") %>% 
+  mutate(share_mefait_PDQ_total_mefait = number_mefaits/number_mefaits_island) %>% 
   ggplot()+
   geom_sf(aes(fill=share_mefait_PDQ_total_mefait), color="transparent")+
   theme_void()+
   scale_fill_gradientn(name="Percentage mischief crimes by PDQ per total mischief crimes",
-                       colors=pal)+
+                       colors = pal,
+                       labels = scales::percent)+
   labs(title="Share of mischief crimes per PDQ by PDQ per year")+
   facet_wrap(~DATE)
 
