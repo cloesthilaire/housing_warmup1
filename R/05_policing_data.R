@@ -64,14 +64,8 @@ library(wesanderson)
 pal <- wes_palette("Zissou1", 10, type = c("continuous"))
 
 
-<<<<<<< HEAD
-#Visualization of interventions ---------------------------------------
-
-#Number of interventions 2015-2020
-=======
 #Visualization of interventions ---------------------------------------------
 #Change the date to separate into year
->>>>>>> 261540a7b5f20cfdd3e9d83f2e0784e6380ee9dd
 int_PDQ %>% 
   mutate(DATE = year(DATE)) %>%
   filter(DATE != 2021) %>% 
@@ -115,7 +109,7 @@ total_interventions <-
   filter(DATE != 2021) %>% 
   group_by(NOM_PDQ, DATE) %>% 
   summarize(total_number_interventions = n()) 
-  
+
 total_mefait <-
   int_PDQ %>% 
   mutate(DATE = year(DATE)) %>% 
@@ -124,24 +118,9 @@ total_mefait <-
   group_by(NOM_PDQ, DATE) %>%
   summarize(number_mefaits= n()) 
 
-<<<<<<< HEAD
-  #HELP ABOVE HERE CLOÉ. All above works but I can't combine the two datasets---------------------------------
-  #not working as of here
-  cbind(total_interventions,total_mefait, by=c("NOM_PDQ","DATE"))
-  
-st_combine
-  
-Mefaits_per_crime_PDQ_year<-
-  merge(total_interventions,total_mefait,
-        by=c("NOM_PDQ","DATE"))
- merge
-   ?st_join(total_interventions,total_mefait, by=c("NOM_PDQ","DATE"))
- %>% 
-=======
 total_mefait %>% 
   left_join(., st_drop_geometry(total_interventions), by = c("NOM_PDQ", "DATE")) %>% 
   mutate(mefait_prop = number_mefaits/total_number_interventions) %>% 
->>>>>>> 261540a7b5f20cfdd3e9d83f2e0784e6380ee9dd
   ggplot()+
   geom_sf(aes(fill=mefait_prop), color="transparent")+
   theme_void()+
@@ -150,7 +129,7 @@ total_mefait %>%
   labs(title="Percentage of mefait out of total interventions by PDQ per year")+
   facet_wrap(~DATE)
 
-  
+
 #Mefait by PDQ by population
 #This is not working // it is not going to work because of thing we talked about... try using int_CT 
 # for a population analysis if you want
@@ -261,96 +240,99 @@ int_PDQ %>%
   facet_wrap(~DATE)
 
 #Make map set 2 by year with the facet_wrap (group by PDQ and year)
-  int_PDQ %>% 
-    mutate(DATE=year(DATE)) %>%
-    filter(DATE != 2021) %>% 
-    group_by(NOM_PDQ, DATE) %>% 
-    summarize(number_intervention = n()) %>% 
-    ggplot()+
-    geom_sf(aes(fill=number_intervention))+
-    scale_fill_gradient2(low="green",mid="blue", high="red")+
-    theme_void()+
-    labs(title="Sum of police interventions per PDQ per year")+
-    labs(fill="Number of interventions")+
-    facet_wrap(~DATE)
-  
+int_PDQ %>% 
+  mutate(DATE=year(DATE)) %>%
+  filter(DATE != 2021) %>% 
+  group_by(NOM_PDQ, DATE) %>% 
+  summarize(number_intervention = n()) %>% 
+  ggplot()+
+  geom_sf(aes(fill=number_intervention))+
+  scale_fill_gradient2(low="green",mid="blue", high="red")+
+  theme_void()+
+  labs(title="Sum of police interventions per PDQ per year")+
+  labs(fill="Number of interventions")+
+  facet_wrap(~DATE)
+
 #Geom uses + signs, not pipes 
 #Map set by CT
-  #Merge CT and int data sets
-  int_CT <- st_join(CT, int)
-  #the first one is the geometry that you are keeping
-  #Crimes per capita
-    int_CT %>% 
-      st_filter(CT) %>% 
-    mutate(DATE = year(DATE)) %>% 
-    filter(DATE != 2021) %>% 
-      filter(population>50) %>% 
-      filter(CATEGORIE == "Mefait") %>% 
-      group_by(GeoUID, population,DATE) %>% 
-      summarize(n_int = n()) %>% 
-      mutate(int_density = n_int/(population/100)) %>% 
-      ggplot()+
-      geom_sf(aes(fill=int_density),color=NA)+
-    scale_fill_gradientn(name="Number of mischiefs by 100 people",
-                         colors=col_palette[c(4,1,9)],
-                         limits = c(0,2 ), oob = scales::squish)+
-    theme_void()+facet_wrap(~DATE)
-  
-  
-#Bivariate maps-----------------------------------
-  #Load libraries
-  library(biscale)
-  library(scales)
-  library(ggplot2)
-  library(cowplot)
-  library(grid)
-  library(gridGraphics)
-  library(patchwork)
-  
-# Set the bivariate color palette
-  
-  bivar <- bi_pal_manual(val_1_1 = "#e8e8e8",
-                         val_1_2 = "#b8d6be",
-                         val_2_1 = "#b5c0da", 
-                         val_2_2 = "#90b2b3", 
-                         val_3_1 = "#6c83b5",  
-                         val_3_2 = "#567994", 
-                         val_1_3 = "#73ae80", 
-                         val_2_3 = "#5a9178",
-                         val_3_3 = "#2a5a5b", preview=FALSE)
-  
-  show_col(bivar)
-  
-  # Prepare the dataset to display in a bivariate choropleth map
+#Merge CT and int data sets
+int_CT <- st_join(CT, int)
+#the first one is the geometry that you are keeping
+#Crimes per capita
+int_CT %>% 
+  st_filter(CT) %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE != 2021) %>% 
+  filter(population>50) %>% 
+  filter(CATEGORIE == "Mefait") %>% 
+  group_by(GeoUID, population,DATE) %>% 
+  summarize(n_int = n()) %>% 
+  mutate(int_density = n_int/(population/100)) %>% 
+  ggplot()+
+  geom_sf(aes(fill=int_density),color=NA)+
+  scale_fill_gradientn(name="Number of mischiefs by 100 people",
+                       colors=col_palette[c(4,1,9)],
+                       limits = c(0,2 ), oob = scales::squish)+
+  theme_void()+facet_wrap(~DATE)
 
-  #Map 1: Median_HH_income_AT and Mefait
+
+#Bivariate maps-----------------------------------
+#Load libraries
+library(biscale)
+library(scales)
+library(ggplot2)
+library(cowplot)
+library(grid)
+library(gridGraphics)
+library(patchwork)
+
+# Set the bivariate color palette
+
+bivar <- bi_pal_manual(val_1_1 = "#e8e8e8",
+                       val_1_2 = "#b8d6be",
+                       val_2_1 = "#b5c0da", 
+                       val_2_2 = "#90b2b3", 
+                       val_3_1 = "#6c83b5",  
+                       val_3_2 = "#567994", 
+                       val_1_3 = "#73ae80", 
+                       val_2_3 = "#5a9178",
+                       val_3_3 = "#2a5a5b", preview=FALSE)
+
+show_col(bivar)
+
+# Prepare the dataset to display in a bivariate choropleth map
+
+#Map 1: Median_HH_income_AT and Mefait
+
+Income_mefait <-
+  bi_class(int_CT, x = median_HH_income_AT, y = CATEGORIE=Mefait, style = "quantile", dim = 3, 
+           keep_factors = FALSE)
+
+# Plot for the bivariate choropleth map
+
+Bivarite_map_lowincome_aboriginal <- 
+  ggplot() +
+  geom_sf(data =Percentage_low_income, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
+  bi_scale_fill(pal = bivar, dim = 3) +
+  bi_theme()+
+  theme(legend.position = "bottom")
+
+Bivarite_map_lowincome_aboriginal #to see your plot
+
+# Add bivariate legend
+
+bi_legend <- bi_legend(pal = bivar,
+                       dim = 3,
+                       xlab = "Percentage of low income",
+                       ylab = "Percentage of aboriginal",
+                       size = 8)
+plotlegend <- Bivarite_map_lowincome_aboriginal + inset_element(bi_legend, left = 0, bottom = 0.6, right = 0.4, top = 1)
+
+
+# Save in PDF in your output/figures folder to see the true sizes of your plot, ajust accordingly
+
+ggsave("output/figures/Bivarite_map_lowincome_aboriginal.pdf", plot = plotlegend, width = 8, 
+       height = 5, units = "in", useDingbats = FALSE)
   
-  Income_mefait <-
-    bi_class(int_CT, x = median_HH_income_AT, y = CATEGORIE=Mefait, style = "quantile", dim = 3, 
-             keep_factors = FALSE)
-  
-  # Plot for the bivariate choropleth map
-  
-  Bivarite_map_lowincome_aboriginal <- 
-    ggplot() +
-    geom_sf(data =Percentage_low_income, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
-    bi_scale_fill(pal = bivar, dim = 3) +
-    bi_theme()+
-    theme(legend.position = "bottom")
-  
-  Bivarite_map_lowincome_aboriginal #to see your plot
-  
-  # Add bivariate legend
-  
-  bi_legend <- bi_legend(pal = bivar,
-                         dim = 3,
-                         xlab = "Percentage of low income",
-                         ylab = "Percentage of aboriginal",
-                         size = 8)
-  plotlegend <- Bivarite_map_lowincome_aboriginal + inset_element(bi_legend, left = 0, bottom = 0.6, right = 0.4, top = 1)
   
   
-  # Save in PDF in your output/figures folder to see the true sizes of your plot, ajust accordingly
-  
-  ggsave("output/figures/Bivarite_map_lowincome_aboriginal.pdf", plot = plotlegend, width = 8, 
-         height = 5, units = "in", useDingbats = FALSE)
