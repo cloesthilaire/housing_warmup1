@@ -61,7 +61,7 @@ pal <- wes_palette("Zissou1", 10, type = c("continuous"))
 
 #Visualization of interventions ---------------------------------------
 
-#Change the date to separate into year
+#Number of interventions 2015-2020
 int_PDQ %>% 
   mutate(DATE = year(DATE)) %>%
   filter(DATE != 2021) %>% 
@@ -83,6 +83,7 @@ PDQ_sf <-
 
 #Putting PDQ and crimes together (notice that this dataset has less data)
 int_PDQ <- st_join(PDQ_sf,int %>% select(-PDQ))
+
 #Putting PDQ, crimes and CT data together 
 #(!!THIS SEEMS TO BE TOO BIG)
 int_CT_PDQ <- st_join(CT, int_PDQ)
@@ -116,15 +117,19 @@ total_mefait <-
   filter(DATE != 2021) %>% 
   filter(CATEGORIE == "Mefait") %>% 
   group_by(NOM_PDQ, DATE) %>%
-  summarize(number_mefaits= n()) %>% 
+  summarize(number_mefaits= n()) 
+
   #HELP ABOVE HERE CLOÉ. All above works but I can't combine the two datasets---------------------------------
   #not working as of here
   cbind(total_interventions,total_mefait, by=c("NOM_PDQ","DATE"))
-  st_combine
-  Mefaits_per_crime_PDQ_year<-
+  
+st_combine
+  
+Mefaits_per_crime_PDQ_year<-
   merge(total_interventions,total_mefait,
         by=c("NOM_PDQ","DATE"))
-  ?st_join(total_interventions,total_mefait, by=c("NOM_PDQ","DATE"))
+ merge
+   ?st_join(total_interventions,total_mefait, by=c("NOM_PDQ","DATE"))
  %>% 
   ggplot()+
   geom_sf(aes(fill=number_intervention), color="transparent")+
