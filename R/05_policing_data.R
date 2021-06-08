@@ -1,66 +1,70 @@
 #Data policing report########################################################
-load("output/geometry.Rdata")
+#load("output/geometry.Rdata")
+
 load("output/int.Rdata")
 load("output/CTALEXIA.Rdata")
 source("R/01_startup.R")
-install.packages("cancensus")
-library(cancensus)
-install.packages("dplyr")
-library(dplyr)
 
+library(cancensus)
+library(dplyr)
 
 #To set API key (do not need to run this every time)
 set_api_key("<CensusMapper_e6c6d57ebc92d3b6b6d5abeb72951cfd>", install=TRUE)
 readRenviron("~/.Renviron")
 
-#Load CT with population data
+# Import boundaries of PDQs ------------------------------------------------
 
-CT <-
-  cancensus::get_census(
-    dataset = "CA16", regions = list(CSD = c("2466023")), level = "CT",
-    vectors = c("v_CA16_4840", "v_CA16_4841", "v_CA16_4836", "v_CA16_4838",
-                "v_CA16_4897", "v_CA16_4899", "v_CA16_4870", "v_CA16_4872",
-                "v_CA16_4900", "v_CA16_3957", "v_CA16_3954", "v_CA16_3411", 
-                "v_CA16_3405", "v_CA16_6698", "v_CA16_6692", "v_CA16_6725", 
-                "v_CA16_6719", "v_CA16_4896", "v_CA16_4861", "v_CA16_4859",
-                "v_CA16_2398", "v_CA16_2540", "v_CA16_3852", "v_CA16_3855",
-                "v_CA16_5123", "v_CA16_5096"),
-    geo_format = "sf") %>% 
-  st_transform(32618) %>% 
-  select(-c(Type, Households, `Adjusted Population (previous Census)`:CMA_UID, CSD_UID, PR_UID:`Area (sq km)`)) %>% 
-  set_names(c("GeoUID", "population", "dwellings", "parent_condo", "condo", "parent_tenure", 
-              "renter", "parent_thirty", "p_thirty_renter", "parent_repairs", "major_repairs",
-              "median_rent", "average_value_dwellings", "unsuitable_housing", "parent_unsuitable",
-              "vm", "parent_vm", "immigrants", "parent_immigrants", "mobility_one_year",
-              "parent_mobility_one_year", "mobility_five_years", "parent_mobility_five_years", 
-              "median_HH_income_AT", "p_low_income_AT", "parent_aboriginal",
-              "aboriginal", "bachelor_above", "parent_education",
-              "geometry")) %>% 
-  mutate(p_condo = condo / parent_condo,
-         p_renter = renter / parent_tenure, 
-         p_repairs = major_repairs / parent_repairs,
-         p_vm = vm/parent_vm,
-         p_immigrants = immigrants/parent_immigrants,
-         p_mobility_one_year = mobility_one_year/parent_mobility_one_year,
-         p_mobility_five_years = mobility_five_years/parent_mobility_five_years,
-         p_unsuitable = unsuitable_housing/parent_unsuitable,
-         p_aboriginal = aboriginal/parent_aboriginal,
-         p_bachelor_above = bachelor_above / parent_education) %>% 
-  select(GeoUID, population, dwellings, renter, median_rent, average_value_dwellings, median_HH_income_AT, p_thirty_renter, p_condo, 
-         p_renter, p_repairs, p_mobility_one_year, p_mobility_five_years, p_unsuitable,
-         p_vm, p_immigrants, p_aboriginal, p_low_income_AT, p_bachelor_above) %>% 
-  as_tibble() %>% 
-  st_as_sf(agr = "constant")
+PDQ_sf <-
+  read_sf("data/Limites/Limites_PDQ.shp") %>% 
+  st_transform(32618)
+
+# Load CT with population data ---------------------------------------------
+
+# CT <-
+#   cancensus::get_census(
+#     dataset = "CA16", regions = list(CSD = c("2466023")), level = "CT",
+#     vectors = c("v_CA16_4840", "v_CA16_4841", "v_CA16_4836", "v_CA16_4838",
+#                 "v_CA16_4897", "v_CA16_4899", "v_CA16_4870", "v_CA16_4872",
+#                 "v_CA16_4900", "v_CA16_3957", "v_CA16_3954", "v_CA16_3411", 
+#                 "v_CA16_3405", "v_CA16_6698", "v_CA16_6692", "v_CA16_6725", 
+#                 "v_CA16_6719", "v_CA16_4896", "v_CA16_4861", "v_CA16_4859",
+#                 "v_CA16_2398", "v_CA16_2540", "v_CA16_3852", "v_CA16_3855",
+#                 "v_CA16_5123", "v_CA16_5096"),
+#     geo_format = "sf") %>% 
+#   st_transform(32618) %>% 
+#   select(-c(Type, Households, `Adjusted Population (previous Census)`:CMA_UID, CSD_UID, PR_UID:`Area (sq km)`)) %>% 
+#   set_names(c("GeoUID", "population", "dwellings", "parent_condo", "condo", "parent_tenure", 
+#               "renter", "parent_thirty", "p_thirty_renter", "parent_repairs", "major_repairs",
+#               "median_rent", "average_value_dwellings", "unsuitable_housing", "parent_unsuitable",
+#               "vm", "parent_vm", "immigrants", "parent_immigrants", "mobility_one_year",
+#               "parent_mobility_one_year", "mobility_five_years", "parent_mobility_five_years", 
+#               "median_HH_income_AT", "p_low_income_AT", "parent_aboriginal",
+#               "aboriginal", "bachelor_above", "parent_education",
+#               "geometry")) %>% 
+#   mutate(p_condo = condo / parent_condo,
+#          p_renter = renter / parent_tenure, 
+#          p_repairs = major_repairs / parent_repairs,
+#          p_vm = vm/parent_vm,
+#          p_immigrants = immigrants/parent_immigrants,
+#          p_mobility_one_year = mobility_one_year/parent_mobility_one_year,
+#          p_mobility_five_years = mobility_five_years/parent_mobility_five_years,
+#          p_unsuitable = unsuitable_housing/parent_unsuitable,
+#          p_aboriginal = aboriginal/parent_aboriginal,
+#          p_bachelor_above = bachelor_above / parent_education) %>% 
+#   select(GeoUID, population, dwellings, renter, median_rent, average_value_dwellings, median_HH_income_AT, p_thirty_renter, p_condo, 
+#          p_renter, p_repairs, p_mobility_one_year, p_mobility_five_years, p_unsuitable,
+#          p_vm, p_immigrants, p_aboriginal, p_low_income_AT, p_bachelor_above) %>% 
+#   as_tibble() %>% 
+#   st_as_sf(agr = "constant")
+
 
 #Load wes anderson colors ---------------------------------------------------
 
 library(wesanderson)
-
 pal <- wes_palette("Zissou1", 10, type = c("continuous"))
 
 
-#Visualization of interventions ---------------------------------------
-
+#Visualization of interventions ---------------------------------------------
 #Change the date to separate into year
 int_PDQ %>% 
   mutate(DATE = year(DATE)) %>%
@@ -74,18 +78,14 @@ int_PDQ %>%
                        colors=col_palette[c(4, 1, 9)])+
   facet_wrap(~CATEGORIE)
 
-#Map set by PDQ------------------------------------------------------------
-#Import boundaries of PDQs 
-PDQ_sf <-
-  read_sf("data/Limites/Limites_PDQ.shp") %>% 
-  st_transform(32618)
 
+#Map set by PDQ------------------------------------------------------------
 
 #Putting PDQ and crimes together (notice that this dataset has less data)
 int_PDQ <- st_join(PDQ_sf,int %>% select(-PDQ))
+
 #Putting PDQ, crimes and CT data together 
-#(!!THIS SEEMS TO BE TOO BIG)
-int_CT_PDQ <- st_join(CT, int_PDQ)
+int_CT <- st_join(CT, int)
 
 #Mefait by PDQ
 int_PDQ %>% 
@@ -101,13 +101,13 @@ int_PDQ %>%
                        colors=pal)+
   labs(title="Number of mefaits by PDQ per year")+
   facet_wrap(~DATE)
-#Mefaits per crimes per PDQ
 
+#Mefaits per crimes per PDQ
 total_interventions <-
   int_PDQ %>% 
   mutate(DATE = year(DATE)) %>% 
   filter(DATE != 2021) %>% 
-  group_by(NOM_PDQ,DATE) %>% 
+  group_by(NOM_PDQ, DATE) %>% 
   summarize(total_number_interventions = n()) 
   
 total_mefait <-
@@ -116,26 +116,24 @@ total_mefait <-
   filter(DATE != 2021) %>% 
   filter(CATEGORIE == "Mefait") %>% 
   group_by(NOM_PDQ, DATE) %>%
-  summarize(number_mefaits= n()) %>% 
-  #HELP ABOVE HERE CLOÉ. All above works but I can't combine the two datasets---------------------------------
-  #not working as of here
-  cbind(total_interventions,total_mefait, by=c("NOM_PDQ","DATE"))
-  st_combine
-  Mefaits_per_crime_PDQ_year<-
-  merge(total_interventions,total_mefait,
-        by=c("NOM_PDQ","DATE"))
-  ?st_join(total_interventions,total_mefait, by=c("NOM_PDQ","DATE"))
- %>% 
+  summarize(number_mefaits= n()) 
+
+total_mefait %>% 
+  left_join(., st_drop_geometry(total_interventions), by = c("NOM_PDQ", "DATE")) %>% 
+  mutate(mefait_prop = number_mefaits/total_number_interventions) %>% 
   ggplot()+
-  geom_sf(aes(fill=number_intervention), color="transparent")+
+  geom_sf(aes(fill=mefait_prop), color="transparent")+
   theme_void()+
   scale_fill_gradientn(name="Number of interventions",
                        colors=pal)+
-  labs(title="Number of mefaits by PDQ per year")+
+  labs(title="Percentage of mefait out of total interventions by PDQ per year")+
   facet_wrap(~DATE)
+
   
 #Mefait by PDQ by population
-#This is not working
+#This is not working // it is not going to work because of thing we talked about... try using int_CT 
+# for a population analysis if you want
+
 int_CT_PDQ %>% 
   mutate(DATE = year(DATE)) %>% 
   filter(DATE != 2021) %>% 
@@ -149,6 +147,7 @@ int_CT_PDQ %>%
                        colors=pal)+
   labs(title="Number of mefaits by PDQ per year")+
   facet_wrap(~DATE)
+
 #This is not working either
 int_CT_PDQ %>% 
   filter(DATE != 2021) %>% 
@@ -164,8 +163,8 @@ int_CT_PDQ %>%
                        limits = c(0,2 ), oob = scales::squish)+
   theme_void()+facet_wrap(~DATE)
 
-#Facet_wrap crée un graph par catégorie assignée
 
+#Facet_wrap crée un graph par catégorie assignée
 #Vol de vehicule a moteur
 int_PDQ %>% 
   filter(CATEGORIE == "Vol de vehicule a moteur") %>% 
