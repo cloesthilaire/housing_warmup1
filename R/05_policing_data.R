@@ -99,7 +99,7 @@ int_PDQ %>%
   theme_void()+
   scale_fill_gradientn(name="Number of interventions",
                        colors=pal)+
-  labs(title="Number of mefaits by PDQ per year")+
+  labs(title="Number of mischief crimes by PDQ per year")+
   facet_wrap(~DATE)
 
 #Mefaits per crimes per PDQ
@@ -120,15 +120,69 @@ total_mefait <-
 
 total_mefait %>% 
   left_join(., st_drop_geometry(total_interventions), by = c("NOM_PDQ", "DATE")) %>% 
-  mutate(mefait_prop = number_mefaits/total_number_interventions) %>% 
+  mutate(mefait_prop = (number_mefaits/total_number_interventions)*100) %>% 
   ggplot()+
   geom_sf(aes(fill=mefait_prop), color="transparent")+
   theme_void()+
-  scale_fill_gradientn(name="Number of interventions",
+  scale_fill_gradientn(name="Percentage mischief per total crimes(%)",
                        colors=pal)+
-  labs(title="Percentage of mefait out of total interventions by PDQ per year")+
+  labs(title="Percentage of mischief out of total crimes by PDQ per year")+
   facet_wrap(~DATE)
 
+#Ratio Mefaits per non-discretionary crimes per PDQ
+total_interventions_minus_mefaits <-
+  int_PDQ %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE != 2021) %>% 
+  filter(CATEGORIE != "Mefait") %>% 
+  group_by(NOM_PDQ, DATE) %>% 
+  summarize(total_number_interventions_minus_mefaits = n()) 
+
+total_mefait %>% 
+  left_join(., st_drop_geometry(total_interventions_minus_mefaits), by = c("NOM_PDQ", "DATE")) %>% 
+  mutate(mefait_prop_non_discretionary = number_mefaits/total_number_interventions_minus_mefaits) %>% 
+  ggplot()+
+  geom_sf(aes(fill=mefait_prop_non_discretionary), color="transparent")+
+  theme_void()+
+  scale_fill_gradientn(name="Ratios (mischief:less discretionary crime)",
+                       colors=pal)+
+  labs(title="Ratio of mischief crimes to other less discretionary crimes by PDQ per year")+
+  facet_wrap(~DATE)
+
+#Mefaits by PDQ per total mefaits
+#this first part is me trying to install packages to use the
+#tetlin function, without success
+#I'Ve removed the tetlin function from the code and have just
+#kept the st_buffer function
+install.packages("lwgeom")
+library(lwgeom)
+install.packages("liblwgeom")
+library
+install.packages("gmm")
+install.packages("sandwich")
+library(sandwich)
+library(gmm)
+#Ignore all the packages installed above
+
+total_mefait_island <-
+  int_PDQ %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE != 2021) %>% 
+  filter(CATEGORIE == "Mefait") %>% 
+  group_by(CATEGORIE, DATE) %>%
+  st_buffer(0) %>% 
+  summarize(number_mefaits_island= n())
+
+total_mefait %>% 
+  left_join(., st_drop_geometry(total_mefait_island), by = "DATE") %>% 
+  mutate(share_mefait_PDQ_total_mefait = (number_mefaits/number_mefaits_island)*100) %>% 
+  ggplot()+
+  geom_sf(aes(fill=share_mefait_PDQ_total_mefait), color="transparent")+
+  theme_void()+
+  scale_fill_gradientn(name="Percentage mischief crimes by PDQ per total mischief crimes",
+                       colors=pal)+
+  labs(title="Share of mischief crimes per PDQ by PDQ per year")+
+  facet_wrap(~DATE)
 
 #Mefait by PDQ by population
 #This is not working // it is not going to work because of thing we talked about... try using int_CT 
