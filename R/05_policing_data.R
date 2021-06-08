@@ -2,7 +2,10 @@
 #load("output/geometry.Rdata")
 
 load("output/int.Rdata")
+#the above data has the wrong CT and DA datasets for me
+#I need the ones loaded below
 load("output/CTALEXIA.Rdata")
+load("output/DA.Rdata")
 source("R/01_startup.R")
 
 library(cancensus)
@@ -311,11 +314,11 @@ int_PDQ %>%
   facet_wrap(~DATE)
 
 #Geom uses + signs, not pipes 
-#Map set by CT
+#Map set by CT----------------------------------
 #Merge CT and int data sets
 int_CT <- st_join(CT, int)
 #the first one is the geometry that you are keeping
-#Crimes per capita
+#Mischief crimes per capita CT level
 int_CT %>% 
   st_filter(CT) %>% 
   mutate(DATE = year(DATE)) %>% 
@@ -323,17 +326,34 @@ int_CT %>%
   filter(population>50) %>% 
   filter(CATEGORIE == "Mefait") %>% 
   group_by(GeoUID, population,DATE) %>% 
-  summarize(n_int = n()) %>% 
-  mutate(int_density = n_int/(population/100)) %>% 
+  summarize(n_int_CT = n()) %>% 
+  mutate(int_density_CT = n_int_CT/(population/100)) %>% 
   ggplot()+
   geom_sf(aes(fill=int_density),color=NA)+
-  scale_fill_gradientn(name="Number of mischiefs by 100 people",
+  scale_fill_gradientn(name="Number of mischiefs by 100 people (CT level)",
+                       colors=col_palette[c(4,1,9)],
+                       limits = c(0,2 ), oob = scales::squish)+
+  theme_void()+facet_wrap(~DATE)
+#Map set by DA------------------------------------------------------------------
+int_DA <- st_join(DA, int)
+#Mischief crimes per capita
+int_DA %>% 
+  st_filter(DA) %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE != 2021) %>% 
+  filter(population>50) %>% 
+  filter(CATEGORIE == "Mefait") %>% 
+  group_by(GeoUID, population,DATE) %>% 
+  summarize(n_int_DA = n()) %>% 
+  mutate(int_density_DA = n_int_DA/(population/100)) %>% 
+  ggplot()+
+  geom_sf(aes(fill=int_density_DA),color=NA)+
+  scale_fill_gradientn(name="Number of mischiefs by 100 people (DA level)",
                        colors=col_palette[c(4,1,9)],
                        limits = c(0,2 ), oob = scales::squish)+
   theme_void()+facet_wrap(~DATE)
 
-
-#Bivariate maps-----------------------------------
+#Bivariate maps------------------------------------------------------
 #Load libraries
 library(biscale)
 library(scales)
@@ -358,37 +378,44 @@ bivar <- bi_pal_manual(val_1_1 = "#e8e8e8",
 show_col(bivar)
 
 # Prepare the dataset to display in a bivariate choropleth map
+#At the CT level
+#Map 1: Median_HH_income_AT and Mefait for 2020
 
-#Map 1: Median_HH_income_AT and Mefait
-
-Income_mefait <-
-  bi_class(int_CT, x = median_HH_income_AT, y = CATEGORIE=Mefait, style = "quantile", dim = 3, 
+CT_income_mefait <-
+  int_CT %>% 
+  st_filter(CT) %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE == 2020) %>% 
+  filter(median_HH_income_AT!="NA") %>% 
+  filter(CATEGORIE == "Mefait") %>% 
+  group_by(GeoUID,CATEGORIE,DATE,median_HH_income_AT) %>% 
+  summarize(n_int_mefait_2 = n()) %>% 
+  bi_class(x = n_int_mefait_2, y = median_HH_income_AT, style = "quantile", dim = 3, 
            keep_factors = FALSE)
 
 # Plot for the bivariate choropleth map
 
-Bivarite_map_lowincome_aboriginal <- 
+CT_bivarite_map_medianincome_mefaits <- 
   ggplot() +
-  geom_sf(data =Percentage_low_income, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
+  geom_sf(data =CT_income_mefait, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
   bi_scale_fill(pal = bivar, dim = 3) +
   bi_theme()+
   theme(legend.position = "bottom")
 
-Bivarite_map_lowincome_aboriginal #to see your plot
-
 # Add bivariate legend
 
-bi_legend <- bi_legend(pal = bivar,
+bi_legend_medianincome_mefaits <- bi_legend(pal = bivar,
                        dim = 3,
-                       xlab = "Percentage of low income",
-                       ylab = "Percentage of aboriginal",
+                       xlab = "Number of mischief crimes",
+                       ylab = "Average median income",
                        size = 8)
-plotlegend <- Bivarite_map_lowincome_aboriginal + inset_element(bi_legend, left = 0, bottom = 0.6, right = 0.4, top = 1)
+CT_final_bivarite_map_medianincome_mefaits <- CT_bivarite_map_medianincome_mefaits + inset_element(bi_legend_medianincome_mefaits, left = 0, bottom = 0.6, right = 0.4, top = 1)
 
+CT_final_bivarite_map_medianincome_mefaits  #to see your plot
 
 # Save in PDF in your output/figures folder to see the true sizes of your plot, ajust accordingly
 
-ggsave("output/figures/Bivarite_map_lowincome_aboriginal.pdf", plot = plotlegend, width = 8, 
+ggsave("output/figures/Alexia/CT_final_bivarite_map_medianincome_mefaits.pdf", plot = CT_final_bivarite_map_medianincome_mefaits , width = 8, 
        height = 5, units = "in", useDingbats = FALSE)
   
   
