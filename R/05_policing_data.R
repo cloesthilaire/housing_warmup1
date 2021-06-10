@@ -69,6 +69,7 @@ pal <- wes_palette("Zissou1", 10, type = c("continuous"))
 
 #Visualization of interventions ---------------------------------------------
 #Change the date to separate into year
+#Number of interventions per category all years combined (2015-2020)
 int_PDQ %>% 
   mutate(DATE = year(DATE)) %>%
   filter(DATE != 2021) %>% 
@@ -314,7 +315,7 @@ int_PDQ %>%
   facet_wrap(~DATE)
 
 #Geom uses + signs, not pipes 
-#Map set by CT----------------------------------
+#Map set by CT------------------------------------------------------------------
 #Merge CT and int data sets
 int_CT <- st_join(CT, int)
 #the first one is the geometry that you are keeping
@@ -378,7 +379,7 @@ bivar <- bi_pal_manual(val_1_1 = "#e8e8e8",
 show_col(bivar)
 
 # Prepare the dataset to display in a bivariate choropleth map
-#At the CT level
+#Bivariate maps CT level--------------------------------------------------------
 #Map 1: Median_HH_income_AT and Mefait for 2020
 
 CT_income_mefait <-
@@ -388,9 +389,11 @@ CT_income_mefait <-
   filter(DATE == 2020) %>% 
   filter(median_HH_income_AT!="NA") %>% 
   filter(CATEGORIE == "Mefait") %>% 
-  group_by(GeoUID,CATEGORIE,DATE,median_HH_income_AT) %>% 
-  summarize(n_int_mefait_2 = n()) %>% 
-  bi_class(x = n_int_mefait_2, y = median_HH_income_AT, style = "quantile", dim = 3, 
+  filter(population>50) %>% 
+  group_by(GeoUID,CATEGORIE,DATE,median_HH_income_AT,population) %>% 
+  summarize(n_int_CT_mefait_2 = n()) %>% 
+  mutate(int_density_mefait_CT_2 = n_int_CT_mefait_2/(population/100)) %>%
+  bi_class(x = int_density_mefait_CT_2, y = median_HH_income_AT, style = "quantile", dim = 3, 
            keep_factors = FALSE)
 
 # Plot for the bivariate choropleth map
@@ -404,19 +407,98 @@ CT_bivarite_map_medianincome_mefaits <-
 
 # Add bivariate legend
 
-bi_legend_medianincome_mefaits <- bi_legend(pal = bivar,
+bi_legend_medianincome_mefaits_CT <- bi_legend(pal = bivar,
                        dim = 3,
-                       xlab = "Number of mischief crimes",
-                       ylab = "Average median income",
+                       xlab = "Number of mischief crimes per 100 population",
+                       ylab = "Median household income",
                        size = 8)
-CT_final_bivarite_map_medianincome_mefaits <- CT_bivarite_map_medianincome_mefaits + inset_element(bi_legend_medianincome_mefaits, left = 0, bottom = 0.6, right = 0.4, top = 1)
+CT_final_bivarite_map_medianincome_mefaits <- CT_bivarite_map_medianincome_mefaits + inset_element(bi_legend_medianincome_mefaits_CT, left = 0, bottom = 0.6, right = 0.4, top = 1)
 
 CT_final_bivarite_map_medianincome_mefaits  #to see your plot
 
 # Save in PDF in your output/figures folder to see the true sizes of your plot, ajust accordingly
 
-ggsave("output/figures/Alexia/CT_final_bivarite_map_medianincome_mefaits.pdf", plot = CT_final_bivarite_map_medianincome_mefaits , width = 8, 
+ggsave("output/figures/Alexia/CT_final_bivarite_map_medianincome_mefaitsperpopulation.pdf", plot = CT_final_bivarite_map_medianincome_mefaits , width = 8, 
        height = 5, units = "in", useDingbats = FALSE)
   
-  
-  
+#Bivariate maps DA level-------------------------------------------------------- 
+#Map 1: Median_HH_income_AT and Mefait for 2020
+
+DA_income_mefait <-
+  int_DA %>% 
+  st_filter(DA) %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE == 2020) %>% 
+  filter(median_HH_income_AT!="NA") %>% 
+  filter(CATEGORIE == "Mefait") %>% 
+  #filter(population>50) %>% 
+  group_by(GeoUID,CATEGORIE,DATE,median_HH_income_AT,population) %>% 
+  summarize(n_int_DA_mefait_2 = n()) %>% 
+  mutate(int_density_mefait_DA_2 = n_int_DA_mefait_2/(population/100)) %>%
+  bi_class(x = int_density_mefait_DA_2, y = median_HH_income_AT, style = "quantile", dim = 3, 
+           keep_factors = FALSE)
+
+# Plot for the bivariate choropleth map
+
+DA_bivarite_map_medianincome_mefaits <- 
+  ggplot() +
+  geom_sf(data =DA_income_mefait, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
+  bi_scale_fill(pal = bivar, dim = 3) +
+  bi_theme()+
+  theme(legend.position = "bottom")
+
+# Add bivariate legend
+
+bi_legend_medianincome_mefaits_DA <- bi_legend(pal = bivar,
+                                               dim = 3,
+                                               xlab = "Number of mischief crimes per 100 population",
+                                               ylab = "Median household income",
+                                               size = 8)
+DA_final_bivarite_map_medianincome_mefaits <- DA_bivarite_map_medianincome_mefaits + inset_element(bi_legend_medianincome_mefaits_DA, left = 0, bottom = 0.6, right = 0.4, top = 1)
+
+DA_final_bivarite_map_medianincome_mefaits  #to see your plot
+
+# Save in PDF in your output/figures folder to see the true sizes of your plot, ajust accordingly
+
+ggsave("output/figures/Alexia/DA_final_bivarite_map_medianincome_mefaitsperpopulation.pdf", plot = DA_final_bivarite_map_medianincome_mefaits , width = 8, 
+       height = 5, units = "in", useDingbats = FALSE)
+
+#Map 2:Percentage immigrants and mefaits
+DA_immigrant_mefait <-
+  int_DA %>% 
+  st_filter(DA) %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE == 2020) %>% 
+  filter(p_immigrants!="NA") %>% 
+  filter(CATEGORIE == "Mefait") %>% 
+  #filter(population>50) %>% 
+  group_by(GeoUID,CATEGORIE,DATE,p_immigrants,population) %>% 
+  summarize(n_int_mefait_immigrant_DA = n()) %>% 
+  mutate(int_density_mefait_immigrant_DA = n_int_mefait_immigrant_DA/(population/100)) %>%
+  bi_class(x = int_density_mefait_immigrant_DA, y = p_immigrants, style = "quantile", dim = 3, 
+           keep_factors = FALSE)
+
+# Plot for the bivariate choropleth map
+
+DA_bivarite_map_immigrant_mefaits <- 
+  ggplot() +
+  geom_sf(data =DA_immigrant_mefait, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
+  bi_scale_fill(pal = bivar, dim = 3) +
+  bi_theme()+
+  theme(legend.position = "bottom")
+
+# Add bivariate legend
+
+bi_legend_immigrant_mefaits_DA <- bi_legend(pal = bivar,
+                                               dim = 3,
+                                               xlab = "Number of mischief crimes per 100 population",
+                                               ylab = "Percentage immigrants",
+                                               size = 8)
+DA_final_bivarite_map_immigrant_mefaits <- DA_bivarite_map_immigrant_mefaits + inset_element(bi_legend_immigrant_mefaits_DA, left = 0, bottom = 0.6, right = 0.4, top = 1)
+
+DA_final_bivarite_map_immigrant_mefaits  #to see your plot
+
+# Save in PDF in your output/figures folder to see the true sizes of your plot, ajust accordingly
+
+ggsave("output/figures/Alexia/DA_final_bivarite_map_immigrant_mefaitsperpopulation.pdf", plot = DA_final_bivarite_map_immigrant_mefaits , width = 8, 
+       height = 5, units = "in", useDingbats = FALSE)
