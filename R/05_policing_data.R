@@ -255,6 +255,7 @@ int_PDQ %>%
                        colors=col_palette[c(4, 1, 9)])+
   labs(title="Number of skilled thefts by PDQ per year")+
   facet_wrap(~DATE)
+
 #Vol dans / sur vehicule a moteur
 int_PDQ %>% 
   filter(CATEGORIE == "Vol dans / sur vehicule a moteur") %>% 
@@ -501,4 +502,62 @@ DA_final_bivarite_map_immigrant_mefaits  #to see your plot
 # Save in PDF in your output/figures folder to see the true sizes of your plot, ajust accordingly
 
 ggsave("output/figures/Alexia/DA_final_bivarite_map_immigrant_mefaitsperpopulation.pdf", plot = DA_final_bivarite_map_immigrant_mefaits , width = 8, 
+       height = 5, units = "in", useDingbats = FALSE)
+
+#Map 3:Percentage immigrants and mefaits ratio
+DA_total_mefait_immigrants_2019 <-
+  int_DA %>% 
+  st_drop_geometry() %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE == 2019) %>% 
+  filter(CATEGORIE == "Mefait") %>% 
+  group_by(GeoUID,p_immigrants) %>%
+  #st_buffer(0) %>% 
+  summarize(number_mefaits_2019= n())
+
+DA_total_interventions_minus_mefaits_immigrants_2019 <-
+  int_DA %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE == 2019) %>% 
+  filter(CATEGORIE != "Mefait") %>% 
+  group_by(GeoUID, p_immigrants) %>% 
+  summarize(total_number_interventions_minus_mefaits_2019 = n()) 
+
+DA_immigrant_mefait_ratio_2019 <-
+DA_total_mefait_immigrants_2019 %>% 
+  full_join(., DA_total_interventions_minus_mefaits_immigrants_2019, by = c("GeoUID", "p_immigrants")) %>% 
+ mutate(DA_share_mefait_total_intervention_2019 
+         = number_mefaits_2019/total_number_interventions_minus_mefaits_2019) 
+  
+DA_immigrant_mefait_ratio_2019_2 <-
+DA_immigrant_mefait_ratio_2019 %>% 
+  filter(DA_share_mefait_total_intervention_2019!="NA") %>% 
+filter(p_immigrants!="NA") %>% 
+  bi_class(x = DA_share_mefait_total_intervention_2019, y = p_immigrants, style = "quantile", dim = 3, 
+           keep_factors = FALSE)
+
+# Plot for the bivariate choropleth map
+
+DA_bivarite_map_immigrant_mefaits_ratio_2019 <- 
+  ggplot() +
+  geom_sf(data =DA_immigrant_mefait_ratio_2019_2, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
+  bi_scale_fill(pal = bivar, dim = 3) +
+  bi_theme()+
+  theme(legend.position = "bottom")+
+  aes(geometry = geometry)
+
+# Add bivariate legend
+
+DA_bi_legend_immigrant_mefaits_ratio_2019 <- bi_legend(pal = bivar,
+                                            dim = 3,
+                                            xlab = "Ratio of mischief crimes to other non-discretionary crimes",
+                                            ylab = "Percentage immigrants",
+                                            size = 8)
+DA_final_bivarite_map_immigrant_mefaits_ratio_2019 <- DA_bivarite_map_immigrant_mefaits_ratio_2019 + inset_element(DA_bi_legend_immigrant_mefaits_ratio_2019, left = 0, bottom = 0.6, right = 0.4, top = 1)
+
+DA_final_bivarite_map_immigrant_mefaits_ratio_2019 #to see your plot
+
+# Save in PDF in your output/figures folder to see the true sizes of your plot, ajust accordingly
+
+ggsave("output/figures/Alexia/DA_final_bivarite_map_immigrant_mefaits_ratio_2019.pdf", plot = DA_final_bivarite_map_immigrant_mefaits_ratio_2019, width = 8, 
        height = 5, units = "in", useDingbats = FALSE)
