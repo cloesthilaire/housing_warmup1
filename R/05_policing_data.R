@@ -579,7 +579,7 @@ DA_total_interventions_minus_mefaits_unsuitable_2019 <-
   mutate(DATE = year(DATE)) %>% 
   filter(CATEGORIE!= "Mefait") %>% 
   filter(DATE == 2019) %>% 
-  group_by(GeoUID, p_unsuitable) %>% 
+  group_by(GeoUID) %>% 
   summarize(total_number_interventions_minus_mefaits_2019 = n()) 
 
 DA_unsuitable_mefait_ratio_2019 <-
@@ -640,6 +640,72 @@ DA_scatterplot_share_mefait_total_intervention_2019 <-
      xlab="Mischief crimes per non-discretionary crimes", ylab="Percentage unsuitable housing", pch=19)
 
 #take 3
-DA_unsuitable_mefait_ratio_2019_scatterplot <-
+DA_unsuitable_mefait_ratio_2019_scatterplot_1 <-
 DA_unsuitable_mefait_ratio_2019_2 %>% 
+  ggplot()+
 geom_point(mapping = aes(x=number_mefaits_2019, y=DA_share_mefait_total_intervention_2019))
+
+DA_unsuitable_mefait_ratio_2019_scatterplot_2 <-
+  DA_unsuitable_mefait_ratio_2019_2 %>% 
+  filter(DA_share_mefait_total_intervention_2019<=6) %>% 
+  filter(p_unsuitable<=0.5) %>% 
+  ggplot()+
+  geom_point(mapping = aes(x=DA_share_mefait_total_intervention_2019, y=p_unsuitable))
+
+#DA level: p_immigrants and mischief ratio
+DA_immigrant_mefait_ratio_2019_scatterplot <-
+  DA_immigrant_mefait_ratio_2019_2 %>% 
+  filter(DA_share_mefait_total_intervention_2019<=6) %>% 
+  filter(p_immigrants<=0.75) %>% 
+  ggplot()+
+  geom_point(mapping = aes(x=DA_share_mefait_total_intervention_2019, y=p_immigrants))
+
+DA_immigrant_mefait_ratio_2019_scatterplot_2 <-
+  DA_immigrant_mefait_ratio_2019_2 %>% 
+  filter(DA_share_mefait_total_intervention_2019<=2) %>% 
+  filter(p_immigrants<=0.75) %>% 
+  ggplot()+
+  geom_point(mapping = aes(x=DA_share_mefait_total_intervention_2019, y=p_immigrants))
+
+#CT level
+#CT and mischief per 100 ppl
+#variables to keep: GeoUID, population, median_HH_income_AT,p_unsuitable
+#p_immigrants, p_aboriginal, p_low_income_AT, geometry <MULTIPOLYGON [m]>
+#CATEGORIE <chr>,DATE <chr>
+#no need to filter for NA in ggplot
+
+int_CT_plots_1 <-
+  int_CT %>% 
+  st_filter(CT) %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE==2019) %>% 
+    group_by(GeoUID) %>% 
+  summarize(n_int_CT_categorie=n()) 
+
+int_CT_plots_2 <-
+  int_CT %>% 
+  st_filter(CT) %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE==2019) %>% 
+  filter(CATEGORIE=="Mefait") %>% 
+  group_by(GeoUID) %>% 
+  summarize(n_int_CT_mefait=n()) 
+
+int_CT_plots_3 <-
+  full_join(st_drop_geometry(int_CT_plots_1),st_drop_geometry(int_CT_plots_2), by="GeoUID") %>% 
+  mutate(mefait_share=n_int_CT_mefait/n_int_CT_categorie)
+  
+int_CT_plots_4<-
+left_join(int_CT_plots_3, CT, by="GeoUID") %>% 
+  filter(population>50) %>% 
+  mutate(n_int_CT_mefait_per100ppl=n_int_CT_mefait/(population/100))
+
+#Now you can play with int_CT_plots_4 3  
+ggplot(data=int_CT_plots_4)+
+  geom_point(mapping = aes(x=mefait_share, y=p_low_income_AT))+
+  xlim(c(0,0.5))
+
+#nothing much there
+#do it with mefait_share and n_int_CT_mefait_per100ppl
+    
+#CT and mischief per total interventions ratio
