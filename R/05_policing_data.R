@@ -8,6 +8,7 @@ load("output/CTALEXIA.Rdata")
 load("output/DA.Rdata")
 source("R/01_startup.R")
 
+install.packages("cancensus")
 library(cancensus)
 library(dplyr)
 
@@ -561,3 +562,77 @@ DA_final_bivarite_map_immigrant_mefaits_ratio_2019 #to see your plot
 
 ggsave("output/figures/Alexia/DA_final_bivarite_map_immigrant_mefaits_ratio_2019.pdf", plot = DA_final_bivarite_map_immigrant_mefaits_ratio_2019, width = 8, 
        height = 5, units = "in", useDingbats = FALSE)
+
+#Map 4:Percentage unsuitable and mefaits ratio
+DA_total_mefait_unsuitable_2019 <-
+  int_DA %>% 
+  st_drop_geometry() %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE == 2019) %>% 
+  filter(CATEGORIE == "Mefait") %>% 
+  group_by(GeoUID,p_unsuitable) %>%
+  #st_buffer(0) %>% 
+  summarize(number_mefaits_2019= n())
+
+DA_total_interventions_minus_mefaits_unsuitable_2019 <-
+  int_DA %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(CATEGORIE!= "Mefait") %>% 
+  filter(DATE == 2019) %>% 
+  group_by(GeoUID, p_unsuitable) %>% 
+  summarize(total_number_interventions_minus_mefaits_2019 = n()) 
+
+DA_unsuitable_mefait_ratio_2019 <-
+  DA_total_mefait_unsuitable_2019 %>% 
+  full_join(., DA_total_interventions_minus_mefaits_unsuitable_2019, by = c("GeoUID", "p_unsuitable")) %>% 
+  mutate(DA_share_mefait_total_intervention_2019 
+         = number_mefaits_2019/total_number_interventions_minus_mefaits_2019) 
+
+DA_unsuitable_mefait_ratio_2019_2 <-
+  DA_unsuitable_mefait_ratio_2019 %>% 
+  filter(DA_share_mefait_total_intervention_2019!="NA") %>% 
+  filter(p_unsuitable!="NA") %>% 
+  bi_class(x = DA_share_mefait_total_intervention_2019, y = p_unsuitable, style = "quantile", dim = 3, 
+           keep_factors = FALSE)
+
+# Plot for the bivariate choropleth map
+
+DA_bivarite_map_unsuitable_mefaits_ratio_2019 <- 
+  ggplot() +
+  geom_sf(data =DA_unsuitable_mefait_ratio_2019_2, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
+  bi_scale_fill(pal = bivar, dim = 3) +
+  bi_theme()+
+  theme(legend.position = "bottom")+
+  aes(geometry = geometry)
+
+# Add bivariate legend
+
+DA_bi_legend_unsuitable_mefaits_ratio_2019 <- bi_legend(pal = bivar,
+                                                       dim = 3,
+                                                       xlab = "Ratio of mischief crimes to other non-discretionary crimes",
+                                                       ylab = "Percentage unsuitable housing",
+                                                       size = 8)
+DA_final_bivarite_map_unsuitable_mefaits_ratio_2019 <- DA_bivarite_map_unsuitable_mefaits_ratio_2019 + inset_element(DA_bi_legend_unsuitable_mefaits_ratio_2019, left = 0, bottom = 0.6, right = 0.4, top = 1)
+
+DA_final_bivarite_map_unsuitable_mefaits_ratio_2019 #to see your plot
+
+# Save in PDF in your output/figures folder to see the true sizes of your plot, ajust accordingly
+
+ggsave("output/figures/Alexia/DA_final_bivarite_map_unsuitable_mefaits_ratio_2019.pdf", plot = DA_final_bivarite_map_unsuitable_mefaits_ratio_2019, width = 8, 
+       height = 5, units = "in", useDingbats = FALSE)
+#Scatter plots------------------------------------------------------------------
+install.packages("car")
+library(car)
+
+#DA level: unsuitable + mischief ratio
+#not working hehehe
+scatterplot(p_unsuitable ~ DA_share_mefait_total_intervention_2019 |data=DA_unsuitable_mefait_ratio_2019,
+            xlab="Percentage unsuitable", 
+            ylab="Ratio of mischief crimes to non discretionary crimes",
+            main="DA scatter plot I: Mischief crimes and housing unsuitability",
+            labels=row.names(mtcars))
+#take 2
+attach(DA_unsuitable_mefait_ratio_2019)
+DA_scatterplot_share_mefait_total_intervention_2019 <-
+  plot(p_unsuitable, DA_share_mefait_total_intervention_2019, main="Scatterplot Example",
+     xlab="Mischief crimes per non-discretionary crimes", ylab="Percentage unsuitable housing", pch=19)
