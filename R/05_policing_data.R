@@ -620,7 +620,9 @@ DA_final_bivarite_map_unsuitable_mefaits_ratio_2019 #to see your plot
 
 ggsave("output/figures/Alexia/DA_final_bivarite_map_unsuitable_mefaits_ratio_2019.pdf", plot = DA_final_bivarite_map_unsuitable_mefaits_ratio_2019, width = 8, 
        height = 5, units = "in", useDingbats = FALSE)
+
 #Scatter plots------------------------------------------------------------------
+
 install.packages("car")
 library(car)
 
@@ -631,8 +633,13 @@ scatterplot(p_unsuitable ~ DA_share_mefait_total_intervention_2019 |data=DA_unsu
             ylab="Ratio of mischief crimes to non discretionary crimes",
             main="DA scatter plot I: Mischief crimes and housing unsuitability",
             labels=row.names(mtcars))
-#take 2
+#take 2, sort of works
 attach(DA_unsuitable_mefait_ratio_2019)
 DA_scatterplot_share_mefait_total_intervention_2019 <-
   plot(p_unsuitable, DA_share_mefait_total_intervention_2019, main="Scatterplot Example",
      xlab="Mischief crimes per non-discretionary crimes", ylab="Percentage unsuitable housing", pch=19)
+
+#take 3
+DA_unsuitable_mefait_ratio_2019_scatterplot <-
+DA_unsuitable_mefait_ratio_2019_2 %>% 
+geom_point(mapping = aes(x=number_mefaits_2019, y=DA_share_mefait_total_intervention_2019))
