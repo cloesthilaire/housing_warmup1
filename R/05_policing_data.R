@@ -8,6 +8,7 @@ load("output/CTALEXIA.Rdata")
 load("output/DA.Rdata")
 source("R/01_startup.R")
 
+#These packages are not necessary
 install.packages("cancensus")
 library(cancensus)
 library(dplyr)
@@ -70,6 +71,7 @@ pal <- wes_palette("Zissou1", 10, type = c("continuous"))
 
 #Visualization of interventions ---------------------------------------------
 #Change the date to separate into year
+#Map set by PDQ------------------------------------------------------------
 #Number of interventions per category all years combined (2015-2020)
 int_PDQ %>% 
   mutate(DATE = year(DATE)) %>%
@@ -83,16 +85,10 @@ int_PDQ %>%
                        colors=col_palette[c(4, 1, 9)])+
   facet_wrap(~CATEGORIE)
 
-
-#Map set by PDQ------------------------------------------------------------
-
 #Putting PDQ and crimes together (notice that this dataset has less data)
 int_PDQ <- st_join(PDQ_sf,int %>% select(-PDQ))
 
-#Putting PDQ, crimes and CT data together 
-int_CT <- st_join(CT, int)
-
-#Mefait by PDQ
+#Mischief by PDQ
 int_PDQ %>% 
   mutate(DATE = year(DATE)) %>% 
   filter(DATE != 2021) %>% 
@@ -107,7 +103,7 @@ int_PDQ %>%
   labs(title="Number of mischief crimes by PDQ per year")+
   facet_wrap(~DATE)
 
-#Mefaits per crimes per PDQ
+#Mischief per crimes per PDQ
 total_interventions <-
   int_PDQ %>% 
   mutate(DATE = year(DATE)) %>% 
@@ -135,7 +131,7 @@ total_mefait %>%
   labs(title="Percentage of mischief out of total crimes by PDQ per year")+
   facet_wrap(~DATE)
 
-#Ratio Mefaits per non-discretionary crimes per PDQ
+#Ratio mischiefs per non-discretionary crimes per PDQ
 total_interventions_minus_mefaits <-
   int_PDQ %>% 
   mutate(DATE = year(DATE)) %>% 
@@ -155,20 +151,7 @@ total_mefait %>%
   labs(title="Ratio of mischief crimes to other less\ndiscretionary crimes by PDQ per year")+
   facet_wrap(~DATE)
 
-#Mefaits by PDQ per total mefaits
-#this first part is me trying to install packages to use the
-#tetlin function, without success
-#I'Ve removed the tetlin function from the code and have just
-#kept the st_buffer function
-install.packages("lwgeom")
-library(lwgeom)
-install.packages("liblwgeom")
-library
-install.packages("gmm")
-install.packages("sandwich")
-library(sandwich)
-library(gmm)
-#Ignore all the packages installed above
+#Mischiefs by PDQ per total mischiefs
 
 total_mefait_island <-
   int_PDQ %>% 
@@ -177,7 +160,6 @@ total_mefait_island <-
   filter(DATE != 2021) %>% 
   filter(CATEGORIE == "Mefait") %>% 
   group_by(DATE) %>%
-  #st_buffer(0) %>% 
   summarize(number_mefaits_island= n())
 
 total_mefait %>% 
@@ -191,39 +173,6 @@ total_mefait %>%
                        labels = scales::percent)+
   labs(title="Share of mischief crimes per PDQ by PDQ per year")+
   facet_wrap(~DATE)
-
-#Mefait by PDQ by population
-#This is not working // it is not going to work because of thing we talked about... try using int_CT 
-# for a population analysis if you want
-
-int_CT_PDQ %>% 
-  mutate(DATE = year(DATE)) %>% 
-  filter(DATE != 2021) %>% 
-  filter(CATEGORIE == "Mefait") %>% 
-  group_by(NOM_PDQ, DATE) %>%
-  summarize(number_intervention = n()) %>% 
-  ggplot()+
-  geom_sf(aes(fill=number_intervention), color="transparent")+
-  theme_void()+
-  scale_fill_gradientn(name="Number of interventions",
-                       colors=pal)+
-  labs(title="Number of mefaits by PDQ per year")+
-  facet_wrap(~DATE)
-
-#This is not working either
-int_CT_PDQ %>% 
-  filter(DATE != 2021) %>% 
-  filter(population>50) %>% 
-  filter(CATEGORIE == "Mefait") %>% 
-  group_by(NOM_PDQ, population,DATE) %>% 
-  summarize(n_int = n()) %>% 
-  mutate(int_density = n_int/(population/100)) %>% 
-  ggplot()+
-  geom_sf(aes(fill=int_density),color=NA)+
-  scale_fill_gradientn(name="Number of mischiefs by 100 people",
-                       colors=col_palette[c(4,1,9)],
-                       limits = c(0,2 ), oob = scales::squish)+
-  theme_void()+facet_wrap(~DATE)
 
 
 #Facet_wrap crée un graph par catégorie assignée
@@ -302,7 +251,7 @@ int_PDQ %>%
   labs(title="Number of break-ins/thefts of firearms in residences by PDQ per year")+
   facet_wrap(~DATE)
 
-#Make map set 2 by year with the facet_wrap (group by PDQ and year)
+#Make map set by year with the facet_wrap (group by PDQ and year)
 int_PDQ %>% 
   mutate(DATE=year(DATE)) %>%
   filter(DATE != 2021) %>% 
@@ -317,10 +266,13 @@ int_PDQ %>%
   facet_wrap(~DATE)
 
 #Geom uses + signs, not pipes 
+
 #Map set by CT------------------------------------------------------------------
+
 #Merge CT and int data sets
 int_CT <- st_join(CT, int)
-#the first one is the geometry that you are keeping
+#the first one in the join is the geometry that you are keeping
+
 #Mischief crimes per capita CT level
 int_CT %>% 
   st_filter(CT) %>% 
@@ -337,8 +289,12 @@ int_CT %>%
                        colors=col_palette[c(4,1,9)],
                        limits = c(0,2 ), oob = scales::squish)+
   theme_void()+facet_wrap(~DATE)
+
 #Map set by DA------------------------------------------------------------------
+
+#Merge DA and int data sets
 int_DA <- st_join(DA, int)
+
 #Mischief crimes per capita
 int_DA %>% 
   st_filter(DA) %>% 
@@ -381,6 +337,7 @@ bivar <- bi_pal_manual(val_1_1 = "#e8e8e8",
 show_col(bivar)
 
 # Prepare the dataset to display in a bivariate choropleth map
+
 #Bivariate maps CT level--------------------------------------------------------
 #Map 1: Median_HH_income_AT and Mefait for 2020
 
@@ -424,6 +381,7 @@ ggsave("output/figures/Alexia/CT_final_bivarite_map_medianincome_mefaitsperpopul
        height = 5, units = "in", useDingbats = FALSE)
   
 #Bivariate maps DA level-------------------------------------------------------- 
+
 #Map 1: Median_HH_income_AT and Mefait for 2020
 
 DA_income_mefait <-
@@ -466,6 +424,7 @@ ggsave("output/figures/Alexia/DA_final_bivarite_map_medianincome_mefaitsperpopul
        height = 5, units = "in", useDingbats = FALSE)
 
 #Map 2:Percentage immigrants and mefaits
+
 DA_immigrant_mefait <-
   int_DA %>% 
   st_filter(DA) %>% 
@@ -506,6 +465,7 @@ ggsave("output/figures/Alexia/DA_final_bivarite_map_immigrant_mefaitsperpopulati
        height = 5, units = "in", useDingbats = FALSE)
 
 #Map 3:Percentage immigrants and mefaits ratio
+
 DA_total_mefait_immigrants_2019 <-
   int_DA %>% 
   st_drop_geometry() %>% 
@@ -513,7 +473,6 @@ DA_total_mefait_immigrants_2019 <-
   filter(DATE == 2019) %>% 
   filter(CATEGORIE == "Mefait") %>% 
   group_by(GeoUID,p_immigrants) %>%
-  #st_buffer(0) %>% 
   summarize(number_mefaits_2019= n())
 
 DA_total_interventions_minus_mefaits_immigrants_2019 <-
