@@ -207,9 +207,9 @@ city <-
 
 # Unite evaluation fonciere -----------------------------------------------
 
-# uef_raw <-
-#   read_sf("data/uniteevaluationfonciere/uniteevaluationfonciere.shp") %>%
-#   st_transform(32618)
+uef_raw <-
+  read_sf("data/uniteevaluationfonciere/uniteevaluationfonciere.shp") %>%
+  st_transform(32618)
 
 
 # Streets -----------------------------------------------------------------
