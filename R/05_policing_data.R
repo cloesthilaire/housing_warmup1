@@ -384,7 +384,7 @@ ggsave("output/figures/Alexia/CT_bivarite_map_medianincome_mischiefsperpopulatio
        height = 5, units = "in", useDingbats = FALSE)
 
 # Map 2: Percentage low income  and Mischief share for 2019
-
+#IT STARTS HERE CLOÉ!-----------------------------------------------------------
 # Make new dataset
 # The CT_int_plots_4 dataframe is made in the scatterplots section
 
