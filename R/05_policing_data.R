@@ -390,7 +390,8 @@ ggsave("output/figures/Alexia/CT_bivarite_map_medianincome_mischiefsperpopulatio
 
 CT_lowincome_mischief_share_2019 <-
   CT_int_plots_4 %>%
-  bi_class(x = p_low_income_AT, y =CT_mischief_share_2019 , style = "quantile", dim = 3, 
+  na.omit() %>% 
+  bi_class(x = p_low_income_AT, y=CT_mischief_share_2019 , style = "quantile", dim = 3, 
            keep_factors = FALSE)
 
 # Plot for the bivariate choropleth map
@@ -407,8 +408,8 @@ CT_bivarite_map_lowincome_mischief_share_2019 <-
 
 CT_bi_legend_lowincome_mischiefs_share_2019 <- bi_legend(pal = bivar,
                                                       dim = 3,
-                                                      xlab = "Percentage of mischief crimes out of all crimes",
-                                                      ylab = "Percentage of low income households",
+                                                      xlab = "Percentage of mischief\ncrimes out of all crimes",
+                                                      ylab = "Percentage of low\nincome households",
                                                       size = 8)
 
 CT_final_bivarite_map_lowincome_mischief_share_2019 <- 
