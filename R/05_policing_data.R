@@ -383,14 +383,18 @@ ggsave("output/figures/Alexia/CT_bivarite_map_medianincome_mischiefsperpopulatio
        plot = CT_final_bivarite_map_medianincome_mischief_2019, width = 8, 
        height = 5, units = "in", useDingbats = FALSE)
 
+# For maps 2 and 3, you can switch out the variables to study the variables of 
+# interest: p_unsuitable, p_immigrants, p_aboriginal, p_low_income_AT, p_vm
+
 # Map 2: Percentage low income  and Mischief share for 2019
-#IT STARTS HERE CLOÉ!-----------------------------------------------------------
+
 # Make new dataset
 # The CT_int_plots_4 dataframe is made in the scatterplots section
 
 CT_lowincome_mischief_share_2019 <-
   CT_int_plots_4 %>%
-  bi_class(x = p_low_income_AT, y =CT_mischief_share_2019 , style = "quantile", dim = 3, 
+  na.omit() %>% 
+  bi_class(x = p_low_income_AT, y=CT_mischief_share_2019, style = "quantile", dim = 3, 
            keep_factors = FALSE)
 
 # Plot for the bivariate choropleth map
@@ -403,13 +407,16 @@ CT_bivarite_map_lowincome_mischief_share_2019 <-
   bi_theme()+
   theme(legend.position = "bottom")
 
+
 # Add bivariate legend
 
 CT_bi_legend_lowincome_mischiefs_share_2019 <- bi_legend(pal = bivar,
                                                       dim = 3,
-                                                      xlab = "Percentage of mischief crimes out of all crimes",
-                                                      ylab = "Percentage of low income households",
+                                                      xlab = "Percentage of mischief\ncrimes out of all crimes",
+                                                      ylab = "Percentage of low\nincome housing",
                                                       size = 8)
+# Percentage of mischief\ncrimes out of all crimes or 
+# Number of mischief\ncrimes per 100 people
 
 CT_final_bivarite_map_lowincome_mischief_share_2019 <- 
   CT_bivarite_map_lowincome_mischief_share_2019 + 
@@ -419,10 +426,51 @@ CT_final_bivarite_map_lowincome_mischief_share_2019  # to see your plot
 
 # Save in PDF in your output/figures folder to see the true sizes of your plot, ajust accordingly
 
-ggsave("output/figures/Alexia/CT_bivarite_map_medianincome_mischiefsperpopulation_2019.pdf", 
-       plot = CT_final_bivarite_map_medianincome_mischief_2019, width = 8, 
+ggsave("output/figures/Alexia/CT_bivarite_map_lowincome_mischief_share_2019.pdf", 
+       plot = CT_final_bivarite_map_lowincome_mischief_share_2019, width = 8, 
        height = 5, units = "in", useDingbats = FALSE)
-  
+
+# Map 3: Percentage low income and mischief crimes per 100 ppl
+
+CT_lowincome_mischief_per100ppl_2019 <-
+  CT_int_plots_4 %>%
+  na.omit() %>% 
+  bi_class(x = p_low_income_AT, y=CT_n_mischiefs_per100ppl, style = "quantile", dim = 3, 
+           keep_factors = FALSE)
+
+# Plot for the bivariate choropleth map
+
+CT_bivarite_map_lowincome_mischief_per100ppl_2019 <- 
+  ggplot() +
+  geom_sf(data =CT_lowincome_mischief_per100ppl_2019, mapping = aes(fill = bi_class), 
+          color = "white", size = 0.1, show.legend = FALSE) +
+  bi_scale_fill(pal = bivar, dim = 3) +
+  bi_theme()+
+  theme(legend.position = "bottom")
+
+
+# Add bivariate legend
+
+CT_bi_legend_lowincome_mischiefs_per100ppl_2019 <- bi_legend(pal = bivar,
+                                                         dim = 3,
+                                                         xlab = " Mischief crimes\nper 100 people",
+                                                         ylab = "Percentage of low\nincome housing",
+                                                         size = 8)
+# Percentage of mischief\ncrimes out of all crimes or
+# Mischief crimes per 100 people
+CT_final_bivarite_map_lowincome_mischief_per100ppl_2019 <- 
+  CT_bivarite_map_lowincome_mischief_per100ppl_2019 + 
+  inset_element(CT_bi_legend_lowincome_mischiefs_per100ppl_2019 , left = 0, bottom = 0.6, right = 0.4, top = 1)
+
+CT_final_bivarite_map_lowincome_mischief_per100ppl_2019  # to see your plot
+
+# Save in PDF in your output/figures folder to see the true sizes of your plot, ajust accordingly
+
+ggsave("output/figures/Alexia/CT_bivarite_map_lowincome_mischief_per100ppl.pdf", 
+       plot = CT_final_bivarite_map_lowincome_mischief_per100ppl_2019, width = 8, 
+       height = 5, units = "in", useDingbats = FALSE)
+
+
 # Bivariate maps DA level-------------------------------------------------------- 
 
 # Map 1: Median income (Median_HH_income_AT) and Mischief for 2019
@@ -641,7 +689,7 @@ library(ggpubr)
 # CT level
 # CT and mischief per 100 ppl
 # variables to keep: GeoUID, population, median_HH_income_AT,p_unsuitable
-# p_immigrants, p_aboriginal, p_low_income_AT, geometry <MULTIPOLYGON [m]>
+# p_immigrants, p_aboriginal, p_low_income_AT, p_vm, geometry <MULTIPOLYGON [m]>
 # CATEGORIE <chr>,DATE <chr>
 # no need to filter for NA in ggplot
 
@@ -677,6 +725,7 @@ left_join(CT_int_plots_3, CT, by="GeoUID") %>%
 CT_int_plots_4 <-
   left_join(CT_int_plots_3, CT, by="GeoUID") %>% 
   filter(population>50) %>% 
+  mutate(CT_n_mischiefs_per100ppl=CT_n_mischiefs_2019/(population/100)) %>% 
   st_as_sf()
 
 # Now you can play with int_CT_plots_4   
