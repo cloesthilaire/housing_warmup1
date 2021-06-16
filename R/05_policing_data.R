@@ -1,172 +1,162 @@
-#Data policing report########################################################
-#load("output/geometry.Rdata")
+# Data policing report########################################################
+# Background to the code-------------------------------------------------------------------
+
+# This code creates maps and scatter plots based on the crimes data from Donnees 
+# Montreal from 2015 until 01.06.2021. There are three spatial levels to the data,
+# the poste de quartier (PDQ or precinct), the census track (CT) and the 
+# dissemination area (DA).The year 2019 was used for the interventions data, as 2020
+# was an unusual year due to the pandemic. 
+
+
+# French to English translations-------------------------------------------------
+
+# Méfaits -> mischief crimes
+# PDQ -> precinct 
+
+# Abbreviations------------------------------------------------------------------
+
+# PDQ = Poste de quartier -> precinct
+# Census track = CT
+# Dissemination Area = DA
+# Interventions = INT
+
+# Loading data and packages------------------------------------------------------
+
+# Loading the crimes data, which we name "interventions"
 
 load("output/int.Rdata")
-#the above data has the wrong CT and DA datasets for me
-#I need the ones loaded below
+
+#the above data has the wrong CT and DA datasets
+#Load the CT and DA datasets
+
 load("output/CTALEXIA.Rdata")
 load("output/DA.Rdata")
 source("R/01_startup.R")
 
-#These packages are not necessary
-install.packages("cancensus")
-library(cancensus)
-library(dplyr)
+#Load wes anderson colors 
 
-#To set API key (do not need to run this every time)
-set_api_key("<CensusMapper_e6c6d57ebc92d3b6b6d5abeb72951cfd>", install=TRUE)
-readRenviron("~/.Renviron")
+library(wesanderson)
+pal <- wes_palette("Zissou1", 10, type = c("continuous"))
 
-# Import boundaries of PDQs ------------------------------------------------
+# Import boundaries of PDQs 
 
 PDQ_sf <-
   read_sf("data/Limites/Limites_PDQ.shp") %>% 
   st_transform(32618)
 
-# Load CT with population data ---------------------------------------------
+#To set API key-----------------------------------------------------------------
+#Do not need to run this every time
+set_api_key("<CensusMapper_e6c6d57ebc92d3b6b6d5abeb72951cfd>", install=TRUE)
+readRenviron("~/.Renviron")
 
-# CT <-
-#   cancensus::get_census(
-#     dataset = "CA16", regions = list(CSD = c("2466023")), level = "CT",
-#     vectors = c("v_CA16_4840", "v_CA16_4841", "v_CA16_4836", "v_CA16_4838",
-#                 "v_CA16_4897", "v_CA16_4899", "v_CA16_4870", "v_CA16_4872",
-#                 "v_CA16_4900", "v_CA16_3957", "v_CA16_3954", "v_CA16_3411", 
-#                 "v_CA16_3405", "v_CA16_6698", "v_CA16_6692", "v_CA16_6725", 
-#                 "v_CA16_6719", "v_CA16_4896", "v_CA16_4861", "v_CA16_4859",
-#                 "v_CA16_2398", "v_CA16_2540", "v_CA16_3852", "v_CA16_3855",
-#                 "v_CA16_5123", "v_CA16_5096"),
-#     geo_format = "sf") %>% 
-#   st_transform(32618) %>% 
-#   select(-c(Type, Households, `Adjusted Population (previous Census)`:CMA_UID, CSD_UID, PR_UID:`Area (sq km)`)) %>% 
-#   set_names(c("GeoUID", "population", "dwellings", "parent_condo", "condo", "parent_tenure", 
-#               "renter", "parent_thirty", "p_thirty_renter", "parent_repairs", "major_repairs",
-#               "median_rent", "average_value_dwellings", "unsuitable_housing", "parent_unsuitable",
-#               "vm", "parent_vm", "immigrants", "parent_immigrants", "mobility_one_year",
-#               "parent_mobility_one_year", "mobility_five_years", "parent_mobility_five_years", 
-#               "median_HH_income_AT", "p_low_income_AT", "parent_aboriginal",
-#               "aboriginal", "bachelor_above", "parent_education",
-#               "geometry")) %>% 
-#   mutate(p_condo = condo / parent_condo,
-#          p_renter = renter / parent_tenure, 
-#          p_repairs = major_repairs / parent_repairs,
-#          p_vm = vm/parent_vm,
-#          p_immigrants = immigrants/parent_immigrants,
-#          p_mobility_one_year = mobility_one_year/parent_mobility_one_year,
-#          p_mobility_five_years = mobility_five_years/parent_mobility_five_years,
-#          p_unsuitable = unsuitable_housing/parent_unsuitable,
-#          p_aboriginal = aboriginal/parent_aboriginal,
-#          p_bachelor_above = bachelor_above / parent_education) %>% 
-#   select(GeoUID, population, dwellings, renter, median_rent, average_value_dwellings, median_HH_income_AT, p_thirty_renter, p_condo, 
-#          p_renter, p_repairs, p_mobility_one_year, p_mobility_five_years, p_unsuitable,
-#          p_vm, p_immigrants, p_aboriginal, p_low_income_AT, p_bachelor_above) %>% 
-#   as_tibble() %>% 
-#   st_as_sf(agr = "constant")
+#Visualization of interventions ------------------------------------------------
+#Map set by PDQ-----------------------------------------------------------------
 
+#Step 1: Putting PDQ and crimes together (notice that this dataset has less data)
+int_PDQ <- st_join(PDQ_sf,int %>% select(-PDQ))
 
-#Load wes anderson colors ---------------------------------------------------
+#Map 1: Number of interventions by PDQ per category all years combined (2015-2020)
 
-library(wesanderson)
-pal <- wes_palette("Zissou1", 10, type = c("continuous"))
-
-
-#Visualization of interventions ---------------------------------------------
-#Change the date to separate into year
-#Map set by PDQ------------------------------------------------------------
-#Number of interventions per category all years combined (2015-2020)
 int_PDQ %>% 
   mutate(DATE = year(DATE)) %>%
   filter(DATE != 2021) %>% 
   group_by(PDQ, CATEGORIE) %>% 
-  summarize(number_intervention = n()) %>% 
+  summarize(PDQ_number_intervention = n()) %>% 
   ggplot()+
-  geom_sf(aes(fill=number_intervention), color="transparent")+
+  geom_sf(aes(fill=PDQ_total_number_intervention), color="transparent")+
   theme_void()+
-  scale_fill_gradientn(name="Number of interventions 2015-2020",
+  scale_fill_gradientn(name="Number of crimes 2015-2020",
                        colors=col_palette[c(4, 1, 9)])+
   facet_wrap(~CATEGORIE)
 
-#Putting PDQ and crimes together (notice that this dataset has less data)
-int_PDQ <- st_join(PDQ_sf,int %>% select(-PDQ))
+#Map 2: Mischief by PDQ per year (2015-2020)
 
-#Mischief by PDQ
 int_PDQ %>% 
   mutate(DATE = year(DATE)) %>% 
   filter(DATE != 2021) %>% 
   filter(CATEGORIE == "Mefait") %>% 
   group_by(NOM_PDQ, DATE) %>%
-  summarize(number_intervention = n()) %>% 
+  summarize(PDQ_number_mischief = n()) %>% 
   ggplot()+
-  geom_sf(aes(fill=number_intervention), color="transparent")+
+  geom_sf(aes(fill=PDQ_number_mischief), color="transparent")+
   theme_void()+
-  scale_fill_gradientn(name="Number of interventions",
+  scale_fill_gradientn(name="Number of crimes",
                        colors=pal)+
   labs(title="Number of mischief crimes by PDQ per year")+
   facet_wrap(~DATE)
 
-#Mischief per crimes per PDQ
-total_interventions <-
+#Map 3: Mischief per crimes per PDQ
+
+PDQ_total_interventions <-
   int_PDQ %>% 
   mutate(DATE = year(DATE)) %>% 
   filter(DATE != 2021) %>% 
   group_by(NOM_PDQ, DATE) %>% 
-  summarize(total_number_interventions = n()) 
+  summarize(PDQ_total_number_interventions_per_year = n()) 
 
-total_mefait <-
+PDQ_total_mischief <-
   int_PDQ %>% 
   mutate(DATE = year(DATE)) %>% 
   filter(DATE != 2021) %>% 
   filter(CATEGORIE == "Mefait") %>% 
   group_by(NOM_PDQ, DATE) %>%
-  summarize(number_mefaits= n()) 
+  summarize(PDQ_number_mischiefs_per_year= n()) 
 
-total_mefait %>% 
-  left_join(., st_drop_geometry(total_interventions), by = c("NOM_PDQ", "DATE")) %>% 
-  mutate(mefait_prop = number_mefaits/total_number_interventions) %>% 
+PDQ_total_mischief %>% 
+  left_join(., st_drop_geometry(PDQ_total_interventions), 
+            by = c("NOM_PDQ", "DATE")) %>% 
+  mutate(mefait_prop = PDQ_number_mischiefs_per_year/
+           PDQ_total_number_interventions_per_year) %>% 
   ggplot()+
   geom_sf(aes(fill=mefait_prop), color="transparent")+
   theme_void()+
-  scale_fill_gradientn(name="Percentage mischief per total crimes(%)",
+  scale_fill_gradientn(name="Percentage mischief per total crimes (%)",
                        colors=pal,
                        labels = scales::percent)+
   labs(title="Percentage of mischief out of total crimes by PDQ per year")+
   facet_wrap(~DATE)
 
-#Ratio mischiefs per non-discretionary crimes per PDQ
-total_interventions_minus_mefaits <-
+#Map 4: Ratio mischiefs per non-discretionary crimes per PDQ
+
+PDQ_total_interventions_minus_mischiefs <-
   int_PDQ %>% 
   mutate(DATE = year(DATE)) %>% 
   filter(DATE != 2021) %>% 
   filter(CATEGORIE != "Mefait") %>% 
   group_by(NOM_PDQ, DATE) %>% 
-  summarize(total_number_interventions_minus_mefaits = n()) 
+  summarize(PDQ_total_number_interventions_minus_mischiefs_per_year = n()) 
 
-total_mefait %>% 
-  left_join(., st_drop_geometry(total_interventions_minus_mefaits), by = c("NOM_PDQ", "DATE")) %>% 
-  mutate(mefait_prop_non_discretionary = number_mefaits/total_number_interventions_minus_mefaits) %>% 
+PDQ_total_mischief %>% 
+  left_join(., st_drop_geometry(PDQ_total_interventions_minus_mischief), 
+            by = c("NOM_PDQ", "DATE")) %>% 
+  mutate(mischief_prop_non_discretionary = PDQ_number_mischiefs_per_year/
+           PDQ_total_number_interventions_minus_mischiefs_per_year) %>% 
   ggplot()+
-  geom_sf(aes(fill=mefait_prop_non_discretionary), color="transparent")+
+  geom_sf(aes(fill=mischief_prop_non_discretionary), color="transparent")+
   theme_void()+
-  scale_fill_gradientn(name="Ratio\n(mischief/\nless discretionary crime)",
+  scale_fill_gradientn(name="Ratio of mischief to less discretionary crime)",
                        colors=pal)+
-  labs(title="Ratio of mischief crimes to other less\ndiscretionary crimes by PDQ per year")+
+  labs(title="Ratio of mischief crimes to other less discretionary crimes 
+       by PDQ per year")+
   facet_wrap(~DATE)
 
-#Mischiefs by PDQ per total mischiefs
+#Map 5: Mischiefs by PDQ per total mischiefs
 
-total_mefait_island <-
+PDQ_total_mischief_island <-
   int_PDQ %>% 
   st_drop_geometry() %>% 
   mutate(DATE = year(DATE)) %>% 
   filter(DATE != 2021) %>% 
   filter(CATEGORIE == "Mefait") %>% 
   group_by(DATE) %>%
-  summarize(number_mefaits_island= n())
+  summarize(PDQ_number_mischief_island= n())
 
 total_mefait %>% 
-  full_join(., total_mefait_island, by = "DATE") %>% 
-  mutate(share_mefait_PDQ_total_mefait = number_mefaits/number_mefaits_island) %>% 
+  full_join(., PDQ_total_mefait_island, by = "DATE") %>% 
+  mutate(PDQ_share_mischief_total_mischief = PDQ_number_mischiefs_per_year/
+           PDQ_number_mischief_island) %>% 
   ggplot()+
-  geom_sf(aes(fill=share_mefait_PDQ_total_mefait), color="transparent")+
+  geom_sf(aes(fill=PDQ_share_mischief_total_mischief), color="transparent")+
   theme_void()+
   scale_fill_gradientn(name="Percentage mischief crimes by PDQ per total mischief crimes",
                        colors = pal,
@@ -174,9 +164,9 @@ total_mefait %>%
   labs(title="Share of mischief crimes per PDQ by PDQ per year")+
   facet_wrap(~DATE)
 
+#Map set per category of crime
+#Map 6.1: Vol de vehicule a moteur -> Theft of motor vehicle
 
-#Facet_wrap crée un graph par catégorie assignée
-#Vol de vehicule a moteur
 int_PDQ %>% 
   filter(CATEGORIE == "Vol de vehicule a moteur") %>% 
   mutate(DATE = year(DATE)) %>% 
@@ -188,10 +178,11 @@ int_PDQ %>%
   theme_void()+
   scale_fill_gradientn(name="Number of interventions",
                        colors=col_palette[c(4, 1, 9)])+
-  labs(title="Number of vehicule theft by PDQ per year")+
+  labs(title="Number of motor vehicule theft by PDQ per year")+
   facet_wrap(~DATE)
 
-#Vols qualifies
+#Map 6.2: Vols qualifies -> Skilled thefts
+
 int_PDQ %>% 
   filter(CATEGORIE == "Vols qualifies") %>% 
   mutate(DATE = year(DATE)) %>% 
@@ -206,7 +197,8 @@ int_PDQ %>%
   labs(title="Number of skilled thefts by PDQ per year")+
   facet_wrap(~DATE)
 
-#Vol dans / sur vehicule a moteur
+#Map 6.3: Vol dans / sur vehicule a moteur -> Thefts of/in motor vehicles
+
 int_PDQ %>% 
   filter(CATEGORIE == "Vol dans / sur vehicule a moteur") %>% 
   mutate(DATE = year(DATE)) %>% 
@@ -221,7 +213,8 @@ int_PDQ %>%
   labs(title="Number of thefts of/in motor vehicles by PDQ per year")+
   facet_wrap(~DATE)
 
-#Infractions entrainant la mort (NEED TO FIX BORDERS)
+#Map 6.4: Infractions entrainant la mort (NEED TO FIX BORDERS)
+
 int_PDQ %>% 
   filter(CATEGORIE == "Infractions entrainant la mort") %>% 
   mutate(DATE = year(DATE)) %>% 
@@ -236,7 +229,8 @@ int_PDQ %>%
   labs(title="Number of offenses causing death by PDQ per year")+
   facet_wrap(~DATE)
 
-#Introduction
+#Map 6.5: Introduction -> Break-ins/thefts of firearms in residences
+
 int_PDQ %>% 
   filter(CATEGORIE == "Introduction") %>% 
   mutate(DATE = year(DATE)) %>% 
@@ -251,7 +245,8 @@ int_PDQ %>%
   labs(title="Number of break-ins/thefts of firearms in residences by PDQ per year")+
   facet_wrap(~DATE)
 
-#Make map set by year with the facet_wrap (group by PDQ and year)
+#Map 7: Map set by year and PDQ (facet group by PDQ and year)
+
 int_PDQ %>% 
   mutate(DATE=year(DATE)) %>%
   filter(DATE != 2021) %>% 
@@ -265,15 +260,14 @@ int_PDQ %>%
   labs(fill="Number of interventions")+
   facet_wrap(~DATE)
 
-#Geom uses + signs, not pipes 
-
 #Map set by CT------------------------------------------------------------------
 
-#Merge CT and int data sets
+#Step 1: Merge CT and int data sets
 int_CT <- st_join(CT, int)
+
 #the first one in the join is the geometry that you are keeping
 
-#Mischief crimes per capita CT level
+#Map 1: Mischief crimes per capita CT level
 int_CT %>% 
   st_filter(CT) %>% 
   mutate(DATE = year(DATE)) %>% 
@@ -292,10 +286,10 @@ int_CT %>%
 
 #Map set by DA------------------------------------------------------------------
 
-#Merge DA and int data sets
+#Step 1: Merge DA and int data sets
 int_DA <- st_join(DA, int)
 
-#Mischief crimes per capita
+#Map 1: Mischief crimes per capita
 int_DA %>% 
   st_filter(DA) %>% 
   mutate(DATE = year(DATE)) %>% 
@@ -312,8 +306,9 @@ int_DA %>%
                        limits = c(0,2 ), oob = scales::squish)+
   theme_void()+facet_wrap(~DATE)
 
-#Bivariate maps------------------------------------------------------
-#Load libraries
+#Bivariate maps-----------------------------------------------------------------
+
+#Step 1: Load libraries
 library(biscale)
 library(scales)
 library(ggplot2)
@@ -322,7 +317,7 @@ library(grid)
 library(gridGraphics)
 library(patchwork)
 
-# Set the bivariate color palette
+#Step 2: Set the bivariate color palette
 
 bivar <- bi_pal_manual(val_1_1 = "#e8e8e8",
                        val_1_2 = "#b8d6be",
@@ -334,173 +329,183 @@ bivar <- bi_pal_manual(val_1_1 = "#e8e8e8",
                        val_2_3 = "#5a9178",
                        val_3_3 = "#2a5a5b", preview=FALSE)
 
-show_col(bivar)
+show_col(bivar) #to show the bivar color palette
 
-# Prepare the dataset to display in a bivariate choropleth map
+#Step 3: Prepare the dataset to display in a bivariate choropleth map
 
-#Bivariate maps CT level--------------------------------------------------------
-#Map 1: Median_HH_income_AT and Mefait for 2020
+# Bivariate maps CT level--------------------------------------------------------
+# Map 1: Median income (Median_HH_income_AT) and Mischief for 2019
 
-CT_income_mefait <-
+# Make new dataset
+CT_income_mischief_2019 <-
   int_CT %>% 
   st_filter(CT) %>% 
   mutate(DATE = year(DATE)) %>% 
-  filter(DATE == 2020) %>% 
+  filter(DATE == 2019) %>% 
   filter(median_HH_income_AT!="NA") %>% 
   filter(CATEGORIE == "Mefait") %>% 
   filter(population>50) %>% 
-  group_by(GeoUID,CATEGORIE,DATE,median_HH_income_AT,population) %>% 
-  summarize(n_int_CT_mefait_2 = n()) %>% 
-  mutate(int_density_mefait_CT_2 = n_int_CT_mefait_2/(population/100)) %>%
-  bi_class(x = int_density_mefait_CT_2, y = median_HH_income_AT, style = "quantile", dim = 3, 
+  group_by(GeoUID,median_HH_income_AT,population) %>% 
+  summarize(CT_n_mischief_2019 = n()) %>% 
+  mutate(CT_density_mischief_2019 = CT_n_mischief_2019/(population/100)) %>%
+  bi_class(x = CT_density_mischief_2019, y = median_HH_income_AT, style = "quantile", dim = 3, 
            keep_factors = FALSE)
 
 # Plot for the bivariate choropleth map
 
-CT_bivarite_map_medianincome_mefaits <- 
+CT_bivarite_map_medianincome_mischief_2019 <- 
   ggplot() +
-  geom_sf(data =CT_income_mefait, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
+  geom_sf(data =CT_income_mischief_2019, mapping = aes(fill = bi_class), 
+          color = "white", size = 0.1, show.legend = FALSE) +
   bi_scale_fill(pal = bivar, dim = 3) +
   bi_theme()+
   theme(legend.position = "bottom")
 
 # Add bivariate legend
 
-bi_legend_medianincome_mefaits_CT <- bi_legend(pal = bivar,
+CT_bi_legend_medianincome_mischiefs_2019 <- bi_legend(pal = bivar,
                        dim = 3,
                        xlab = "Number of mischief crimes per 100 population",
                        ylab = "Median household income",
                        size = 8)
-CT_final_bivarite_map_medianincome_mefaits <- CT_bivarite_map_medianincome_mefaits + inset_element(bi_legend_medianincome_mefaits_CT, left = 0, bottom = 0.6, right = 0.4, top = 1)
 
-CT_final_bivarite_map_medianincome_mefaits  #to see your plot
+CT_final_bivarite_map_medianincome_mischief_2019 <- 
+  CT_bivarite_map_medianincome_mischief_2019 + 
+  inset_element(CT_bi_legend_medianincome_mischiefs_2019, left = 0, bottom = 0.6, right = 0.4, top = 1)
+
+CT_final_bivarite_map_medianincome_mischief_2019  # to see your plot
 
 # Save in PDF in your output/figures folder to see the true sizes of your plot, ajust accordingly
 
-ggsave("output/figures/Alexia/CT_final_bivarite_map_medianincome_mefaitsperpopulation.pdf", plot = CT_final_bivarite_map_medianincome_mefaits , width = 8, 
+ggsave("output/figures/Alexia/CT_bivarite_map_medianincome_mischiefsperpopulation_2019.pdf", 
+       plot = CT_final_bivarite_map_medianincome_mischief_2019, width = 8, 
        height = 5, units = "in", useDingbats = FALSE)
   
-#Bivariate maps DA level-------------------------------------------------------- 
+# Bivariate maps DA level-------------------------------------------------------- 
 
-#Map 1: Median_HH_income_AT and Mefait for 2020
+# Map 1: Median income (Median_HH_income_AT) and Mischief for 2019
 
-DA_income_mefait <-
+# Make new dataset
+
+DA_income_mischief_2019 <-
   int_DA %>% 
   st_filter(DA) %>% 
   mutate(DATE = year(DATE)) %>% 
-  filter(DATE == 2020) %>% 
+  filter(DATE == 2019) %>% 
   filter(median_HH_income_AT!="NA") %>% 
   filter(CATEGORIE == "Mefait") %>% 
   #filter(population>50) %>% 
-  group_by(GeoUID,CATEGORIE,DATE,median_HH_income_AT,population) %>% 
-  summarize(n_int_DA_mefait_2 = n()) %>% 
-  mutate(int_density_mefait_DA_2 = n_int_DA_mefait_2/(population/100)) %>%
-  bi_class(x = int_density_mefait_DA_2, y = median_HH_income_AT, style = "quantile", dim = 3, 
+  group_by(GeoUID,median_HH_income_AT,population) %>% 
+  summarize(DA_n_mischief_2019 = n()) %>% 
+  mutate(DA_density_mischief_2019 = DA_n_mischief_2019/(population/100)) %>%
+  bi_class(x = DA_density_mischief_2019, y = median_HH_income_AT, style = "quantile", dim = 3, 
            keep_factors = FALSE)
 
 # Plot for the bivariate choropleth map
 
-DA_bivarite_map_medianincome_mefaits <- 
+DA_bivarite_map_medianincome_mischiefs_2019 <- 
   ggplot() +
-  geom_sf(data =DA_income_mefait, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
+  geom_sf(data = DA_income_mischief_2019, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
   bi_scale_fill(pal = bivar, dim = 3) +
   bi_theme()+
   theme(legend.position = "bottom")
 
 # Add bivariate legend
 
-bi_legend_medianincome_mefaits_DA <- bi_legend(pal = bivar,
+DA_bi_legend_medianincome_mischiefs_2019 <- bi_legend(pal = bivar,
                                                dim = 3,
                                                xlab = "Number of mischief crimes per 100 population",
                                                ylab = "Median household income",
                                                size = 8)
-DA_final_bivarite_map_medianincome_mefaits <- DA_bivarite_map_medianincome_mefaits + inset_element(bi_legend_medianincome_mefaits_DA, left = 0, bottom = 0.6, right = 0.4, top = 1)
 
-DA_final_bivarite_map_medianincome_mefaits  #to see your plot
+DA_final_bivarite_map_medianincome_mischiefs_2019 <- 
+  DA_bivarite_map_medianincome_mischiefs_2019 + 
+  inset_element(DA_bi_legend_medianincome_mischiefs_2019, left = 0, bottom = 0.6, right = 0.4, top = 1)
+
+DA_final_bivarite_map_medianincome_mischiefs_2019 #to see your plot
 
 # Save in PDF in your output/figures folder to see the true sizes of your plot, ajust accordingly
 
-ggsave("output/figures/Alexia/DA_final_bivarite_map_medianincome_mefaitsperpopulation.pdf", plot = DA_final_bivarite_map_medianincome_mefaits , width = 8, 
+ggsave("output/figures/Alexia/DA_bivarite_map_medianincome_mischiefsperpopulation_2019.pdf", plot = DA_final_bivarite_map_medianincome_mischiefs_2019, width = 8, 
        height = 5, units = "in", useDingbats = FALSE)
 
-#Map 2:Percentage immigrants and mefaits
+# Map 2:Percentage immigrants (p_immigrants) and mischief crimes
 
-DA_immigrant_mefait <-
+DA_immigrant_mischief_2019 <-
   int_DA %>% 
   st_filter(DA) %>% 
   mutate(DATE = year(DATE)) %>% 
-  filter(DATE == 2020) %>% 
+  filter(DATE == 2019) %>% 
   filter(p_immigrants!="NA") %>% 
   filter(CATEGORIE == "Mefait") %>% 
   #filter(population>50) %>% 
-  group_by(GeoUID,CATEGORIE,DATE,p_immigrants,population) %>% 
-  summarize(n_int_mefait_immigrant_DA = n()) %>% 
-  mutate(int_density_mefait_immigrant_DA = n_int_mefait_immigrant_DA/(population/100)) %>%
-  bi_class(x = int_density_mefait_immigrant_DA, y = p_immigrants, style = "quantile", dim = 3, 
+  group_by(GeoUID,p_immigrants,population) %>% 
+  summarize(DA_n_mischief_immigrant_2019 = n()) %>% 
+  mutate(DA_density_mischief_immigrant_2019 = DA_n_mischief_immigrant_2019/(population/100)) %>%
+  bi_class(x = DA_density_mischief_immigrant_2019, y = p_immigrants, style = "quantile", dim = 3, 
            keep_factors = FALSE)
 
 # Plot for the bivariate choropleth map
 
-DA_bivarite_map_immigrant_mefaits <- 
+DA_bivarite_map_immigrant_mischiefs_2019 <- 
   ggplot() +
-  geom_sf(data =DA_immigrant_mefait, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
+  geom_sf(data = DA_immigrant_mischief_2019, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
   bi_scale_fill(pal = bivar, dim = 3) +
   bi_theme()+
   theme(legend.position = "bottom")
 
 # Add bivariate legend
 
-bi_legend_immigrant_mefaits_DA <- bi_legend(pal = bivar,
+DA_bi_legend_immigrant_mischiefs_2019 <- bi_legend(pal = bivar,
                                                dim = 3,
                                                xlab = "Number of mischief crimes per 100 population",
                                                ylab = "Percentage immigrants",
                                                size = 8)
-DA_final_bivarite_map_immigrant_mefaits <- DA_bivarite_map_immigrant_mefaits + inset_element(bi_legend_immigrant_mefaits_DA, left = 0, bottom = 0.6, right = 0.4, top = 1)
+DA_final_bivarite_map_immigrant_mischiefsper100ppl <- 
+  DA_bivarite_map_immigrant_mischiefs_2019 + 
+  inset_element(DA_bi_legend_immigrant_mischiefs_2019, left = 0, bottom = 0.6, right = 0.4, top = 1)
 
-DA_final_bivarite_map_immigrant_mefaits  #to see your plot
+DA_final_bivarite_map_immigrant_mischiefsper100ppl  #to see your plot
 
 # Save in PDF in your output/figures folder to see the true sizes of your plot, ajust accordingly
 
-ggsave("output/figures/Alexia/DA_final_bivarite_map_immigrant_mefaitsperpopulation.pdf", plot = DA_final_bivarite_map_immigrant_mefaits , width = 8, 
+ggsave("output/figures/Alexia/DA_bivarite_map_immigrant_mischiefs_per100ppl_2019.pdf", plot = DA_final_bivarite_map_immigrant_mischiefsper100ppl, width = 8, 
        height = 5, units = "in", useDingbats = FALSE)
 
-#Map 3:Percentage immigrants and mefaits ratio
+# Map 3:Percentage immigrants and mischief ratio
 
-DA_total_mefait_immigrants_2019 <-
+DA_total_mischief_immigrants_2019 <-
   int_DA %>% 
   st_drop_geometry() %>% 
   mutate(DATE = year(DATE)) %>% 
   filter(DATE == 2019) %>% 
   filter(CATEGORIE == "Mefait") %>% 
-  group_by(GeoUID,p_immigrants) %>%
-  summarize(number_mefaits_2019= n())
+  group_by(GeoUID) %>%
+  summarize(DA_number_mischief_2019= n())
 
-DA_total_interventions_minus_mefaits_immigrants_2019 <-
+DA_total_interventions_minus_mischiefs_2019 <-
   int_DA %>% 
   mutate(DATE = year(DATE)) %>% 
   filter(DATE == 2019) %>% 
   filter(CATEGORIE != "Mefait") %>% 
-  group_by(GeoUID, p_immigrants) %>% 
-  summarize(total_number_interventions_minus_mefaits_2019 = n()) 
+  group_by(GeoUID) %>% 
+  summarize(DA_total_number_interventions_minus_mischiefs_2019 = n()) 
 
-DA_immigrant_mefait_ratio_2019 <-
-DA_total_mefait_immigrants_2019 %>% 
-  full_join(., DA_total_interventions_minus_mefaits_immigrants_2019, by = c("GeoUID", "p_immigrants")) %>% 
- mutate(DA_share_mefait_total_intervention_2019 
-         = number_mefaits_2019/total_number_interventions_minus_mefaits_2019) 
-  
-DA_immigrant_mefait_ratio_2019_2 <-
-DA_immigrant_mefait_ratio_2019 %>% 
+DA_immigrant_mischiefs_ratio_2019 <-
+DA_total_mischiefs_immigrants_2019 %>% 
+  full_join(., DA_total_interventions_minus_mischiefs_2019, by = c("GeoUID", "p_immigrants")) %>% 
+ mutate(DA_share_mischiefs_total_intervention_2019 
+         = DA_number_mischief_2019/total_number_interventions_minus_mischiefs_2019) %>% 
   filter(DA_share_mefait_total_intervention_2019!="NA") %>% 
-filter(p_immigrants!="NA") %>% 
+  filter(p_immigrants!="NA") %>% 
   bi_class(x = DA_share_mefait_total_intervention_2019, y = p_immigrants, style = "quantile", dim = 3, 
            keep_factors = FALSE)
-
+ 
 # Plot for the bivariate choropleth map
 
-DA_bivarite_map_immigrant_mefaits_ratio_2019 <- 
+DA_bivarite_map_immigrant_mischiefs_ratio_2019 <- 
   ggplot() +
-  geom_sf(data =DA_immigrant_mefait_ratio_2019_2, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
+  geom_sf(data =DA_immigrant_mischiefs_ratio_2019, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
   bi_scale_fill(pal = bivar, dim = 3) +
   bi_theme()+
   theme(legend.position = "bottom")+
@@ -508,22 +513,26 @@ DA_bivarite_map_immigrant_mefaits_ratio_2019 <-
 
 # Add bivariate legend
 
-DA_bi_legend_immigrant_mefaits_ratio_2019 <- bi_legend(pal = bivar,
+DA_bi_legend_immigrant_mischiefs_ratio_2019 <- bi_legend(pal = bivar,
                                             dim = 3,
                                             xlab = "Ratio of mischief crimes to other non-discretionary crimes",
                                             ylab = "Percentage immigrants",
                                             size = 8)
-DA_final_bivarite_map_immigrant_mefaits_ratio_2019 <- DA_bivarite_map_immigrant_mefaits_ratio_2019 + inset_element(DA_bi_legend_immigrant_mefaits_ratio_2019, left = 0, bottom = 0.6, right = 0.4, top = 1)
 
-DA_final_bivarite_map_immigrant_mefaits_ratio_2019 #to see your plot
+DA_final_bivarite_map_immigrant_mischiefs_ratio_2019 <- 
+  DA_bivarite_map_immigrant_mischiefs_ratio_2019 + 
+  inset_element(DA_bi_legend_immigrant_mischiefs_ratio_2019, left = 0, bottom = 0.6, right = 0.4, top = 1)
+
+DA_final_bivarite_map_immigrant_mischiefs_ratio_2019 #to see your plot
 
 # Save in PDF in your output/figures folder to see the true sizes of your plot, ajust accordingly
 
-ggsave("output/figures/Alexia/DA_final_bivarite_map_immigrant_mefaits_ratio_2019.pdf", plot = DA_final_bivarite_map_immigrant_mefaits_ratio_2019, width = 8, 
+ggsave("output/figures/Alexia/DA_bivarite_map_immigrant_mischiefs_ratio_2019.pdf", plot = DA_final_bivarite_map_immigrant_mischiefs_ratio_2019, width = 8, 
        height = 5, units = "in", useDingbats = FALSE)
 
-#Map 4:Percentage unsuitable and mefaits ratio
-DA_total_mefait_unsuitable_2019 <-
+# Map 4:Percentage unsuitable (p_unsuitable) and mischiefs ratio for 2019
+
+DA_total_mischiefs_unsuitable_2019 <-
   int_DA %>% 
   st_drop_geometry() %>% 
   mutate(DATE = year(DATE)) %>% 
@@ -531,26 +540,23 @@ DA_total_mefait_unsuitable_2019 <-
   filter(CATEGORIE == "Mefait") %>% 
   group_by(GeoUID,p_unsuitable) %>%
   #st_buffer(0) %>% 
-  summarize(number_mefaits_2019= n())
+  summarize(DA_number_mischiefs_2019 = n())
 
-DA_total_interventions_minus_mefaits_unsuitable_2019 <-
+DA_total_interventions_minus_mischiefs_2019 <-
   int_DA %>% 
   mutate(DATE = year(DATE)) %>% 
-  filter(CATEGORIE!= "Mefait") %>% 
   filter(DATE == 2019) %>% 
+  filter(CATEGORIE != "Mefait") %>% 
   group_by(GeoUID) %>% 
-  summarize(total_number_interventions_minus_mefaits_2019 = n()) 
+  summarize(DA_total_number_interventions_minus_mischiefs_2019 = n()) 
 
-DA_unsuitable_mefait_ratio_2019 <-
-  DA_total_mefait_unsuitable_2019 %>% 
-  full_join(., DA_total_interventions_minus_mefaits_unsuitable_2019, by = c("GeoUID", "p_unsuitable")) %>% 
-  mutate(DA_share_mefait_total_intervention_2019 
-         = number_mefaits_2019/total_number_interventions_minus_mefaits_2019) 
-
-DA_unsuitable_mefait_ratio_2019_2 <-
-  DA_unsuitable_mefait_ratio_2019 %>% 
-  filter(DA_share_mefait_total_intervention_2019!="NA") %>% 
-  filter(p_unsuitable!="NA") %>% 
+DA_unsuitable_mischief_ratio_2019 <-
+  DA_total_mischiefs_unsuitable_2019 %>% 
+  full_join(., DA_total_interventions_minus_mischiefs_2019, by = "GeoUID") %>% 
+  mutate(DA_share_mischiefs_total_interventions_2019 
+         = DA_number_mischiefs_2019/DA_total_number_interventions_minus_mischiefs_2019) %>% 
+  #filter(DA_share_mefait_total_intervention_2019!="NA") %>% 
+  #filter(p_unsuitable!="NA") %>% 
   bi_class(x = DA_share_mefait_total_intervention_2019, y = p_unsuitable, style = "quantile", dim = 3, 
            keep_factors = FALSE)
 
@@ -558,7 +564,7 @@ DA_unsuitable_mefait_ratio_2019_2 <-
 
 DA_bivarite_map_unsuitable_mefaits_ratio_2019 <- 
   ggplot() +
-  geom_sf(data =DA_unsuitable_mefait_ratio_2019_2, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
+  geom_sf(data = DA_unsuitable_mischief_ratio_2019, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
   bi_scale_fill(pal = bivar, dim = 3) +
   bi_theme()+
   theme(legend.position = "bottom")+
@@ -566,105 +572,89 @@ DA_bivarite_map_unsuitable_mefaits_ratio_2019 <-
 
 # Add bivariate legend
 
-DA_bi_legend_unsuitable_mefaits_ratio_2019 <- bi_legend(pal = bivar,
+DA_bi_legend_unsuitable_mischief_ratio_2019 <- bi_legend(pal = bivar,
                                                        dim = 3,
                                                        xlab = "Ratio of mischief crimes to other non-discretionary crimes",
                                                        ylab = "Percentage unsuitable housing",
                                                        size = 8)
-DA_final_bivarite_map_unsuitable_mefaits_ratio_2019 <- DA_bivarite_map_unsuitable_mefaits_ratio_2019 + inset_element(DA_bi_legend_unsuitable_mefaits_ratio_2019, left = 0, bottom = 0.6, right = 0.4, top = 1)
 
-DA_final_bivarite_map_unsuitable_mefaits_ratio_2019 #to see your plot
+DA_final_bivarite_map_unsuitable_mischiefs_ratio_2019 <- 
+  DA_bivarite_map_unsuitable_mefaits_ratio_2019 + 
+  inset_element(DA_bi_legend_unsuitable_mischief_ratio_2019, left = 0, bottom = 0.6, right = 0.4, top = 1)
+
+DA_final_bivarite_map_unsuitable_mischiefs_ratio_2019 #to see your plot
 
 # Save in PDF in your output/figures folder to see the true sizes of your plot, ajust accordingly
 
-ggsave("output/figures/Alexia/DA_final_bivarite_map_unsuitable_mefaits_ratio_2019.pdf", plot = DA_final_bivarite_map_unsuitable_mefaits_ratio_2019, width = 8, 
+ggsave("output/figures/Alexia/DA_bivarite_map_unsuitable_mischiefs_ratio_2019.pdf", plot = DA_final_bivarite_map_unsuitable_mischiefs_ratio_2019, width = 8, 
        height = 5, units = "in", useDingbats = FALSE)
 
 #Scatter plots------------------------------------------------------------------
 
 install.packages("car")
 library(car)
+install.packages("ggpubr")
+library(ggpubr)
 
-#DA level: unsuitable + mischief ratio
-#not working hehehe
-scatterplot(p_unsuitable ~ DA_share_mefait_total_intervention_2019 |data=DA_unsuitable_mefait_ratio_2019,
-            xlab="Percentage unsuitable", 
-            ylab="Ratio of mischief crimes to non discretionary crimes",
-            main="DA scatter plot I: Mischief crimes and housing unsuitability",
-            labels=row.names(mtcars))
-#take 2, sort of works
-attach(DA_unsuitable_mefait_ratio_2019)
-DA_scatterplot_share_mefait_total_intervention_2019 <-
-  plot(p_unsuitable, DA_share_mefait_total_intervention_2019, main="Scatterplot Example",
-     xlab="Mischief crimes per non-discretionary crimes", ylab="Percentage unsuitable housing", pch=19)
+# CT level
+# CT and mischief per 100 ppl
+# variables to keep: GeoUID, population, median_HH_income_AT,p_unsuitable
+# p_immigrants, p_aboriginal, p_low_income_AT, geometry <MULTIPOLYGON [m]>
+# CATEGORIE <chr>,DATE <chr>
+# no need to filter for NA in ggplot
 
-#take 3
-DA_unsuitable_mefait_ratio_2019_scatterplot_1 <-
-DA_unsuitable_mefait_ratio_2019_2 %>% 
-  ggplot()+
-geom_point(mapping = aes(x=number_mefaits_2019, y=DA_share_mefait_total_intervention_2019))
-
-DA_unsuitable_mefait_ratio_2019_scatterplot_2 <-
-  DA_unsuitable_mefait_ratio_2019_2 %>% 
-  filter(DA_share_mefait_total_intervention_2019<=6) %>% 
-  filter(p_unsuitable<=0.5) %>% 
-  ggplot()+
-  geom_point(mapping = aes(x=DA_share_mefait_total_intervention_2019, y=p_unsuitable))
-
-#DA level: p_immigrants and mischief ratio
-DA_immigrant_mefait_ratio_2019_scatterplot <-
-  DA_immigrant_mefait_ratio_2019_2 %>% 
-  filter(DA_share_mefait_total_intervention_2019<=6) %>% 
-  filter(p_immigrants<=0.75) %>% 
-  ggplot()+
-  geom_point(mapping = aes(x=DA_share_mefait_total_intervention_2019, y=p_immigrants))
-
-DA_immigrant_mefait_ratio_2019_scatterplot_2 <-
-  DA_immigrant_mefait_ratio_2019_2 %>% 
-  filter(DA_share_mefait_total_intervention_2019<=2) %>% 
-  filter(p_immigrants<=0.75) %>% 
-  ggplot()+
-  geom_point(mapping = aes(x=DA_share_mefait_total_intervention_2019, y=p_immigrants))
-
-#CT level
-#CT and mischief per 100 ppl
-#variables to keep: GeoUID, population, median_HH_income_AT,p_unsuitable
-#p_immigrants, p_aboriginal, p_low_income_AT, geometry <MULTIPOLYGON [m]>
-#CATEGORIE <chr>,DATE <chr>
-#no need to filter for NA in ggplot
-
-int_CT_plots_1 <-
+CT_int_plots_1 <-
   int_CT %>% 
   st_filter(CT) %>% 
   mutate(DATE = year(DATE)) %>% 
   filter(DATE==2019) %>% 
     group_by(GeoUID) %>% 
-  summarize(n_int_CT_categorie=n()) 
+  summarize(CT_n_int_total_2019=n()) 
 
-int_CT_plots_2 <-
+CT_int_plots_2 <-
   int_CT %>% 
   st_filter(CT) %>% 
   mutate(DATE = year(DATE)) %>% 
   filter(DATE==2019) %>% 
   filter(CATEGORIE=="Mefait") %>% 
   group_by(GeoUID) %>% 
-  summarize(n_int_CT_mefait=n()) 
+  summarize(CT_n_mischiefs_2019=n()) 
 
-int_CT_plots_3 <-
-  full_join(st_drop_geometry(int_CT_plots_1),st_drop_geometry(int_CT_plots_2), by="GeoUID") %>% 
-  mutate(mefait_share=n_int_CT_mefait/n_int_CT_categorie)
+CT_int_plots_3 <-
+  full_join(st_drop_geometry(CT_int_plots_1),st_drop_geometry(CT_int_plots_2), by="GeoUID") %>% 
+  mutate(CT_mischief_share_2019=CT_n_mischiefs_2019/CT_n_int_total_2019)
   
-int_CT_plots_4<-
-left_join(int_CT_plots_3, CT, by="GeoUID") %>% 
+CT_int_plots_4 <-
+left_join(CT_int_plots_3, CT, by="GeoUID") %>% 
   filter(population>50) %>% 
-  mutate(n_int_CT_mefait_per100ppl=n_int_CT_mefait/(population/100))
+  mutate(CT_n_mischiefs_per100ppl=CT_n_mischiefs_2019/(population/100)) %>% 
+  mutate(p_low_income_AT=p_low_income_AT/100) 
 
-#Now you can play with int_CT_plots_4 3  
-ggplot(data=int_CT_plots_4)+
-  geom_point(mapping = aes(x=mefait_share, y=p_low_income_AT))+
-  xlim(c(0,0.5))
+# HELP HERE----------------------------------------------------------------------
 
-#nothing much there
-#do it with mefait_share and n_int_CT_mefait_per100ppl
+# Now you can play with int_CT_plots_4   
+p1 <- ggplot(data=CT_int_plots_4, aes (x=p_immigrants, y =CT_n_mischiefs_per100ppl))+
+  geom_point()+
+  geom_smooth(method=lm)+ #Add "se=FALSE" for no confidence boundaries
+  theme_minimal()+
+  scale_x_continuous(name = "Percentage of immigrant inhabitants",
+                     label = scales::percent)+
+  scale_y_continuous("Mischief crimes per 100 people")+
+  ylim(c(0,3))
+  
+  #xlim(c())
+  #ylim(c())
+  
+  # change y between CT_mischief_share_2019 (aka: Percentage of mischief crimes out of all crimes)
+# and CT_n_mischiefs_per100ppl (Mischief crimes per 100 people)
+  # x can be either p_unsuitable, p_vm, p_immigrants, p_aboriginal, p_low_income_AT
+  
+# plot with R2 equation
+  plot_1 <- p1 +
+  stat_cor(
+    aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")),
+    label.x = 0.5, label.y = 2.5)
+
+  plot_1 #to view the plot
+
     
-#CT and mischief per total interventions ratio
