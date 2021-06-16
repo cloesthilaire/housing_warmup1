@@ -284,6 +284,139 @@ int_CT %>%
                        limits = c(0,2 ), oob = scales::squish)+
   theme_void()+facet_wrap(~DATE)
 
+#Map 2: Number of crimes per 100 people by CT per category 2019
+
+CT_crimes_per100ppl_per_category_2019 <-
+int_CT %>% 
+  st_filter(CT) %>% 
+  mutate(DATE = year(DATE)) %>%
+  filter(DATE == 2019) %>% 
+  group_by(GeoUID, CATEGORIE, population) %>% 
+  summarize(CT_crimes_per_categorie_2019 = n()) %>% 
+  filter(CT_crimes_per_categorie_2019 != "NA") %>% 
+  filter(population!= "NA") %>% 
+  filter(population>50) %>% 
+  mutate(CT_crimes_per_categorie_per100ppl_2019=
+           CT_crimes_per_categorie_2019/(population/100))
+
+CT_crimes_per100ppl_per_category_2019 %>% 
+  filter(CT_crimes_per_categorie_per100ppl_2019<=3) %>% 
+  ggplot()+
+  geom_sf(aes(fill=CT_crimes_per_categorie_per100ppl_2019), color="transparent")+
+  theme_void()+
+  scale_fill_gradientn(name="Number of crimes per 100 people in 2019",
+                       colors=pal[c(1, 4, 10)])+
+  facet_wrap(~CATEGORIE)
+
+#absolute number of crimes
+CT_crimes_per100ppl_per_category_2019 %>% 
+  filter(CT_crimes_per_categorie_2019<90) %>% 
+  ggplot()+
+  geom_sf(aes(fill=CT_crimes_per_categorie_2019), color="transparent")+
+  theme_void()+
+  scale_fill_gradientn(name="Number of crimes in 2019",
+                       colors=pal[c(1, 4, 10)])+
+  facet_wrap(~CATEGORIE)
+
+#Map set per category of crime (absolute numbers)
+#Map 3.1: Vol de vehicule a moteur -> Theft of motor vehicle
+# Need to filter more (scale is off)
+int_CT %>% 
+  filter(CATEGORIE == "Vol de vehicule a moteur") %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE != 2021) %>%
+  group_by(GeoUID, DATE) %>% 
+  summarize(number_intervention = n()) %>% 
+  ggplot()+
+  geom_sf(aes(fill=number_intervention), color="transparent")+
+  theme_void()+
+  scale_fill_gradientn(name="Number of interventions",
+                       colors=col_palette[c(4, 1, 9)])+
+  labs(title="Number of motor vehicule theft by CT per year")+
+  facet_wrap(~DATE)
+
+#Map 3.2: Vols qualifies -> Skilled thefts
+
+int_CT %>% 
+  filter(CATEGORIE == "Vols qualifies") %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE != 2021) %>% 
+  group_by(GeoUID, DATE) %>% 
+  summarize(number_intervention = n()) %>% 
+  ggplot()+
+  geom_sf(aes(fill=number_intervention), color="transparent")+
+  theme_void()+
+  scale_fill_gradientn(name="Number of interventions",
+                       colors=col_palette[c(4, 1, 9)])+
+  labs(title="Number of skilled thefts by CT per year")+
+  facet_wrap(~DATE)
+
+# Map 3.3: Vol dans / sur vehicule a moteur -> Thefts of/in motor vehicles
+# Need to refilter (scale is off)
+int_CT %>% 
+  filter(CATEGORIE == "Vol dans / sur vehicule a moteur") %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE != 2021) %>% 
+  group_by(GeoUID, DATE) %>% 
+  summarize(number_intervention = n()) %>% 
+  ggplot()+
+  geom_sf(aes(fill=number_intervention), color="transparent")+
+  theme_void()+
+  scale_fill_gradientn(name="Number of interventions",
+                       colors=col_palette[c(4, 1, 9)])+
+  labs(title="Number of thefts of/in motor vehicles by CT per year")+
+  facet_wrap(~DATE)
+
+# Map 3.4: Infractions entrainant la mort 
+#NEED TO FIX BORDERS
+
+int_CT %>% 
+  filter(CATEGORIE == "Infractions entrainant la mort") %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE != 2021) %>% 
+  group_by(GeoUID, DATE) %>% 
+  summarize(number_intervention = n()) %>% 
+  ggplot()+
+  geom_sf(aes(fill=number_intervention), color="transparent")+
+  theme_void()+
+  scale_fill_gradientn(name="Number of interventions",
+                       colors=col_palette[c(4, 1, 9)])+
+  labs(title="Number of offenses causing death by CT per year")+
+  facet_wrap(~DATE)
+
+#Map 3.5: Introduction -> Break-ins/thefts of firearms in residences
+
+int_CT %>% 
+  filter(CATEGORIE == "Introduction") %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE != 2021) %>% 
+  group_by(GeoUID, DATE) %>% 
+  summarize(number_intervention = n()) %>% 
+  ggplot()+
+  geom_sf(aes(fill=number_intervention), color="transparent")+
+  theme_void()+
+  scale_fill_gradientn(name="Number of interventions",
+                       colors=col_palette[c(4, 1, 9)])+
+  labs(title="Number of break-ins/thefts of firearms in residences by CT per year")+
+  facet_wrap(~DATE)
+
+#Map 3.6: Mefaits -> Mischief
+
+int_CT %>% 
+  filter(CATEGORIE == "Mefait") %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE != 2021) %>% 
+  group_by(GeoUID, DATE) %>% 
+  summarize(number_intervention = n()) %>% 
+  ggplot()+
+  geom_sf(aes(fill=number_intervention), color="transparent")+
+  theme_void()+
+  scale_fill_gradientn(name="Number of interventions",
+                       colors=col_palette[c(4, 1, 9)])+
+  labs(title="Number of mischief crimes by CT per year")+
+  facet_wrap(~DATE)
+
+
 #Map set by DA------------------------------------------------------------------
 
 #Step 1: Merge DA and int data sets
