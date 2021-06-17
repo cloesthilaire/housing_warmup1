@@ -32,6 +32,7 @@ load("output/int.Rdata")
 load("output/CTALEXIA.Rdata")
 load("output/DA.Rdata")
 source("R/01_startup.R")
+load("output/province.Rdata")
 
 #Load wes anderson colors 
 
@@ -278,10 +279,15 @@ int_CT %>%
   summarize(n_int_CT = n()) %>% 
   mutate(int_density_CT = n_int_CT/(population/100)) %>% 
   ggplot()+
-  geom_sf(aes(fill=int_density),color=NA)+
-  scale_fill_gradientn(name="Number of mischiefs by 100 people (CT level)",
+  geom_sf(data=province, fill="grey90", color=NA)+
+  geom_sf(aes(fill=int_density_CT),color=NA)+
+  scale_fill_gradientn(name="Number of mischiefs by 100 people",
                        colors=col_palette[c(4,1,9)],
-                       limits = c(0,2 ), oob = scales::squish)+
+                       limits = c(0,2 ), 
+                       oob = scales::squish, 
+                       na.value = "grey90")+
+  coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
+  ggtitle("Mischief crimes per 100 people (CT level)")+
   theme_void()+facet_wrap(~DATE)
 
 #Map 2: Number of crimes per 100 people by CT per category 2019
@@ -297,30 +303,54 @@ int_CT %>%
   filter(population!= "NA") %>% 
   filter(population>50) %>% 
   mutate(CT_crimes_per_categorie_per100ppl_2019=
-           CT_crimes_per_categorie_2019/(population/100))
+           CT_crimes_per_categorie_2019/(population/100))  
+ 
 
 CT_crimes_per100ppl_per_category_2019 %>% 
   filter(CT_crimes_per_categorie_per100ppl_2019<=3) %>% 
   ggplot()+
+  geom_sf(data=province, fill="grey90", color=NA)+
   geom_sf(aes(fill=CT_crimes_per_categorie_per100ppl_2019), color="transparent")+
   theme_void()+
-  scale_fill_gradientn(name="Number of crimes per 100 people in 2019",
-                       colors=pal[c(1, 4, 10)])+
-  facet_wrap(~CATEGORIE)
+  scale_fill_gradientn(name="Number of crimes per 100 people",
+                       colors=pal[c(1, 4, 10)], 
+                       na.value = "grey90",
+                       oob = scales::squish)+
+  coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
+  ggtitle("Number of crimes per 100 people per category in 2019 (Census Track level)")+
+  facet_wrap(~CATEGORIE, 
+             labeller = labeller(CATEGORIE= c("Mefait" = "Mischief",
+                                  "Introduction" = "Break in",
+                                  "Vol dans / sur vehicule a moteur" = "Theft of/in a motor vehicle",
+                                  "Vols qualifies"="Skilled thefts",
+                                  "Vol de vehicule a moteur"="Theft of motor vehicle",
+                                  "Infractions entrainant la mort"="Offenses causing death")))
 
 #absolute number of crimes
 CT_crimes_per100ppl_per_category_2019 %>% 
   filter(CT_crimes_per_categorie_2019<90) %>% 
   ggplot()+
+  geom_sf(data=province, fill="grey90", color=NA)+
   geom_sf(aes(fill=CT_crimes_per_categorie_2019), color="transparent")+
   theme_void()+
-  scale_fill_gradientn(name="Number of crimes in 2019",
-                       colors=pal[c(1, 4, 10)])+
-  facet_wrap(~CATEGORIE)
+  scale_fill_gradientn(name="Number of crimes",
+                       colors=pal[c(1, 4, 10)], 
+                       na.value = "grey90",
+                       oob = scales::squish)+
+  coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
+  ggtitle("Absolute number of crimes per category in 2019 (Census Track level)")+
+  facet_wrap(~CATEGORIE, labeller = labeller(CATEGORIE= c("Mefait" = "Mischief",
+                                                          "Introduction" = "Break in",
+                                                          "Vol dans / sur vehicule a moteur" = "Theft of/in a motor vehicle",
+                                                          "Vols qualifies"="Skilled thefts",
+                                                          "Vol de vehicule a moteur"="Theft of motor vehicle",
+                                                          "Infractions entrainant la mort"="Offenses causing death")))
 
-#Map set per category of crime (absolute numbers)
-#Map 3.1: Vol de vehicule a moteur -> Theft of motor vehicle
-# Need to filter more (scale is off)
+
+# Map set per category of crime (absolute numbers)
+
+# Map 3.1: Vol de vehicule a moteur -> Theft of motor vehicle
+
 int_CT %>% 
   filter(CATEGORIE == "Vol de vehicule a moteur") %>% 
   mutate(DATE = year(DATE)) %>% 
@@ -328,11 +358,35 @@ int_CT %>%
   group_by(GeoUID, DATE) %>% 
   summarize(number_intervention = n()) %>% 
   ggplot()+
+  geom_sf(data=province, fill="grey90", color=NA)+
   geom_sf(aes(fill=number_intervention), color="transparent")+
   theme_void()+
   scale_fill_gradientn(name="Number of interventions",
-                       colors=col_palette[c(4, 1, 9)])+
-  labs(title="Number of motor vehicule theft by CT per year")+
+                       colors=col_palette[c(4, 1, 9)],
+                       na.value = "grey90")+
+  coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
+  ggtitle("Absolute number of motor vehicle thefts by year (Census Track level)")+
+  facet_wrap(~DATE)
+
+#With an adjusted scale (only 6 CT had values over 100)
+
+int_CT %>% 
+  filter(CATEGORIE == "Vol de vehicule a moteur") %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE != 2021) %>%
+  group_by(GeoUID, DATE) %>% 
+  summarize(number_intervention = n())%>% 
+  ggplot()+
+  geom_sf(data=province, fill="grey90", color=NA)+
+  geom_sf(aes(fill=number_intervention), color="transparent")+
+  theme_void()+
+  scale_fill_gradientn(name="Number of interventions",
+                       colors=col_palette[c(4, 1, 9)],
+                       na.value = "grey90",
+                       limits = c(0,100),
+                       oob = scales::squish)+
+  coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
+  ggtitle("Absolute number of motor vehicle thefts by year (Census Track level)")+
   facet_wrap(~DATE)
 
 #Map 3.2: Vols qualifies -> Skilled thefts
@@ -344,15 +398,19 @@ int_CT %>%
   group_by(GeoUID, DATE) %>% 
   summarize(number_intervention = n()) %>% 
   ggplot()+
+  geom_sf(data=province, fill="grey90", color=NA)+
   geom_sf(aes(fill=number_intervention), color="transparent")+
   theme_void()+
   scale_fill_gradientn(name="Number of interventions",
-                       colors=col_palette[c(4, 1, 9)])+
-  labs(title="Number of skilled thefts by CT per year")+
+                       colors=col_palette[c(4, 1, 9)],
+                       na.value = "grey90",
+                       oob = scales::squish)+
+  coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
+  ggtitle("Absolute number of skilled thefts by year (Census Track level)")+
   facet_wrap(~DATE)
 
 # Map 3.3: Vol dans / sur vehicule a moteur -> Thefts of/in motor vehicles
-# Need to refilter (scale is off)
+
 int_CT %>% 
   filter(CATEGORIE == "Vol dans / sur vehicule a moteur") %>% 
   mutate(DATE = year(DATE)) %>% 
@@ -360,15 +418,38 @@ int_CT %>%
   group_by(GeoUID, DATE) %>% 
   summarize(number_intervention = n()) %>% 
   ggplot()+
+  geom_sf(data=province, fill="grey90", color=NA)+
   geom_sf(aes(fill=number_intervention), color="transparent")+
   theme_void()+
   scale_fill_gradientn(name="Number of interventions",
-                       colors=col_palette[c(4, 1, 9)])+
-  labs(title="Number of thefts of/in motor vehicles by CT per year")+
+                       colors=col_palette[c(4, 1, 9)],
+                       na.value = "grey90",
+                       oob = scales::squish)+
+  coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
+  ggtitle("Absolute number of thefts of/in motor vehicles by year (Census Track level)")+
   facet_wrap(~DATE)
 
-# Map 3.4: Infractions entrainant la mort 
-#NEED TO FIX BORDERS
+# removing outliers (20 values above 100)
+int_CT %>% 
+  filter(CATEGORIE == "Vol dans / sur vehicule a moteur") %>% 
+  mutate(DATE = year(DATE)) %>% 
+  filter(DATE != 2021) %>% 
+  group_by(GeoUID, DATE) %>% 
+  summarize(number_intervention = n()) %>% 
+  ggplot()+
+  geom_sf(data=province, fill="grey90", color=NA)+
+  geom_sf(aes(fill=number_intervention), color="transparent")+
+  theme_void()+
+  scale_fill_gradientn(name="Number of interventions",
+                       colors=col_palette[c(4, 1, 9)],
+                       na.value = "grey90",
+                       limits = c(0,100),
+                       oob = scales::squish)+
+  coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
+  ggtitle("Absolute number of thefts of/in motor vehicles by year (Census Track level) - Max value = 100")+
+  facet_wrap(~DATE)
+
+# Map 3.4: Infractions entrainant la mort -> Offenses causing death
 
 int_CT %>% 
   filter(CATEGORIE == "Infractions entrainant la mort") %>% 
@@ -377,14 +458,20 @@ int_CT %>%
   group_by(GeoUID, DATE) %>% 
   summarize(number_intervention = n()) %>% 
   ggplot()+
+  geom_sf(data=province, fill="grey90", color=NA)+
   geom_sf(aes(fill=number_intervention), color="transparent")+
   theme_void()+
   scale_fill_gradientn(name="Number of interventions",
-                       colors=col_palette[c(4, 1, 9)])+
-  labs(title="Number of offenses causing death by CT per year")+
+                       colors=col_palette[c(4, 1, 9)],
+                       na.value = "grey90",
+                       oob = scales::squish)+
+  coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
+  ggtitle("Absolute number of offenses causing death by year (Census Track level)")+
   facet_wrap(~DATE)
 
 #Map 3.5: Introduction -> Break-ins/thefts of firearms in residences
+# Max values is 100 (3 values over 100)
+
 
 int_CT %>% 
   filter(CATEGORIE == "Introduction") %>% 
@@ -393,14 +480,20 @@ int_CT %>%
   group_by(GeoUID, DATE) %>% 
   summarize(number_intervention = n()) %>% 
   ggplot()+
+  geom_sf(data=province, fill="grey90", color=NA)+
   geom_sf(aes(fill=number_intervention), color="transparent")+
   theme_void()+
   scale_fill_gradientn(name="Number of interventions",
-                       colors=col_palette[c(4, 1, 9)])+
-  labs(title="Number of break-ins/thefts of firearms in residences by CT per year")+
+                       colors=col_palette[c(4, 1, 9)],
+                       na.value = "grey90",
+                       limits = c(0,100),
+                       oob = scales::squish)+
+  coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
+  ggtitle("Absolute number of break-ins/thefts of firearms in residences causing death by year (Census Track level)")+
   facet_wrap(~DATE)
 
 #Map 3.6: Mefaits -> Mischief
+# with max at 100 (only 2 CTs over 100)
 
 int_CT %>% 
   filter(CATEGORIE == "Mefait") %>% 
@@ -409,11 +502,16 @@ int_CT %>%
   group_by(GeoUID, DATE) %>% 
   summarize(number_intervention = n()) %>% 
   ggplot()+
+  geom_sf(data=province, fill="grey90", color=NA)+
   geom_sf(aes(fill=number_intervention), color="transparent")+
   theme_void()+
   scale_fill_gradientn(name="Number of interventions",
-                       colors=col_palette[c(4, 1, 9)])+
-  labs(title="Number of mischief crimes by CT per year")+
+                       colors=col_palette[c(4, 1, 9)],
+                       na.value = "grey90",
+                       limits = c(0,100),
+                       oob = scales::squish)+
+  coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
+  ggtitle("Absolute number of mischief crimes by year (Census Track level)")+
   facet_wrap(~DATE)
 
 
