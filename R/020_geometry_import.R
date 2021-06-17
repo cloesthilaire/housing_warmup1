@@ -7,13 +7,13 @@ library(osmdata)
 
 # Montreal DAs ------------------------------------------------------------
 
-View(cancensus::list_census_regions("CA16"))
+View(cancensus::list_census_vectors("CA16"))
 
 DA <-
   get_census(
     dataset = "CA16", regions = list(CSD = c("2466023")), level = "DA",
     vectors = c("v_CA16_4840", "v_CA16_4841", "v_CA16_4836", "v_CA16_4838",
-                "v_CA16_4897", "v_CA16_4899", "v_CA16_4870", "v_CA16_4872",
+                "v_CA16_4897", "v_CA16_4899", "v_CA16_4870", "v_CA16_4872", "v_CA16_4901",
                 "v_CA16_4900", "v_CA16_3957", "v_CA16_3954", "v_CA16_3411", 
                 "v_CA16_3405", "v_CA16_6698", "v_CA16_6692", "v_CA16_6725", 
                 "v_CA16_6719", "v_CA16_4896", "v_CA16_4861", "v_CA16_4859",
@@ -24,7 +24,7 @@ DA <-
   select(-c(`Shape Area`:Households, CSD_UID, CT_UID:`Area (sq km)`)) %>% 
   set_names(c("dwellings", "GeoUID", "population", "parent_condo", "condo", "parent_tenure", 
               "renter", "parent_thirty", "p_thirty_renter", "parent_repairs", "major_repairs",
-              "median_rent", "average_value_dwellings", "unsuitable_housing", "parent_unsuitable", 
+              "median_rent", "average_value_dwellings", "unsuitable_housing", "parent_unsuitable", "average_rent",
               "vm", "parent_vm", "immigrants", "parent_immigrants", "mobility_one_year",
               "parent_mobility_one_year", "mobility_five_years", "parent_mobility_five_years", 
               "median_HH_income_AT", "p_low_income_AT",
@@ -34,13 +34,14 @@ DA <-
          p_renter = renter / parent_tenure, 
          p_repairs = major_repairs / parent_repairs,
          p_vm = vm/parent_vm,
+         p_thirty_renter = p_thirty_renter/100,
          p_immigrants = immigrants/parent_immigrants,
          p_mobility_one_year = mobility_one_year/parent_mobility_one_year,
          p_mobility_five_years = mobility_five_years/parent_mobility_five_years,
          p_unsuitable = unsuitable_housing/parent_unsuitable,
          p_aboriginal = aboriginal/parent_aboriginal,
          p_bachelor_above = bachelor_above / parent_education) %>% 
-  select(GeoUID, dwellings, population, renter, median_rent, average_value_dwellings, median_HH_income_AT, p_thirty_renter, p_condo, 
+  select(GeoUID, dwellings, population, renter, median_rent, average_rent, average_value_dwellings, median_HH_income_AT, p_thirty_renter, p_condo, 
          p_renter, p_repairs, p_mobility_one_year, p_mobility_five_years, p_unsuitable,
          p_vm, p_immigrants, p_aboriginal, p_low_income_AT, p_bachelor_above) %>% 
   as_tibble() %>% 
@@ -104,7 +105,7 @@ DA_06 <-
   select(-c(`Shape Area`:`Quality Flags`, CSD_UID:CT_UID, CD_UID:`Area (sq km)`)) %>% 
   set_names(c("GeoUID", "dwellings", "parent_tenure", "renter", 
               "parent_repairs", "major_repairs", "parent_thirty", "median_HH_income_AT", "average_gross_rent",
-              "p_thirty_renter", "average_value_dwellings", "vm", "parent_vm", "immigrants", "parent_immigrants",
+              "thirty_renter", "average_value_dwellings", "vm", "parent_vm", "immigrants", "parent_immigrants",
               "mobility_one_year", "parent_mobility_one_year", "mobility_five_years", "parent_mobility_five_years", 
               "p_low_income_AT", "parent_aboriginal", "aboriginal",
               "bachelor", "above_bachelor", "parent_education",
@@ -112,6 +113,7 @@ DA_06 <-
   mutate(bachelor_above = bachelor + above_bachelor,
          p_renter = renter / parent_tenure, 
          p_repairs = major_repairs / parent_repairs,
+         p_thirty_renter = thirty_renter / parent_thirty,
          p_vm = vm/parent_vm,
          p_immigrants = immigrants/parent_immigrants,
          p_mobility_one_year = mobility_one_year/parent_mobility_one_year,
@@ -252,3 +254,4 @@ streets_downtown <-
 
 save(DA, CT, DA_06, CT_06, boroughs, boroughs_raw, province, city, streets, streets_downtown,   
      file = "output/geometry.Rdata")
+

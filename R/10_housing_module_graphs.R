@@ -164,7 +164,7 @@ construction_map <-
   geom_sf(aes(fill=dwellings_date_range), color=NA)+
   scale_fill_gradientn(name="Number of units",
                        colours=col_palette[c(4, 1, 2, 9)],
-                       limits = c(10, 1500),
+                       limits = c(10, 1000),
                        oob = scales::squish)+
   coord_sf(xlim = c(597000, 619000), ylim = c(5030500, 5055000),
            expand = FALSE) +
