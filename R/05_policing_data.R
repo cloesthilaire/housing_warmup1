@@ -386,7 +386,7 @@ int_CT %>%
                        limits = c(0,100),
                        oob = scales::squish)+
   coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
-  ggtitle("Absolute number of motor vehicle thefts by year (Census Track level)")+
+  ggtitle("Absolute number of motor vehicle thefts by year (Census Track level) - Max = 100")+
   facet_wrap(~DATE)
 
 #Map 3.2: Vols qualifies -> Skilled thefts
@@ -489,7 +489,7 @@ int_CT %>%
                        limits = c(0,100),
                        oob = scales::squish)+
   coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
-  ggtitle("Absolute number of break-ins/thefts of firearms in residences causing death by year (Census Track level)")+
+  ggtitle("Absolute number of break-ins/thefts of firearms in residences by year (Census Track level)")+
   facet_wrap(~DATE)
 
 #Map 3.6: Mefaits -> Mischief
