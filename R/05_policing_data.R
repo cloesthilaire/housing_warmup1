@@ -26,15 +26,15 @@
 
 load("output/int.Rdata")
 
-#the above data has the wrong CT and DA datasets
-#Load the CT and DA datasets
+# the above data has the wrong CT and DA datasets
+# Load the CT and DA datasets
 
 load("output/CTALEXIA.Rdata")
 load("output/DA.Rdata")
 source("R/01_startup.R")
 load("output/province.Rdata")
 
-#Load wes anderson colors 
+# Load wes anderson colors 
 
 library(wesanderson)
 pal <- wes_palette("Zissou1", 10, type = c("continuous"))
@@ -45,15 +45,15 @@ PDQ_sf <-
   read_sf("data/Limites/Limites_PDQ.shp") %>% 
   st_transform(32618)
 
-#To set API key-----------------------------------------------------------------
-#Do not need to run this every time
+# To set API key-----------------------------------------------------------------
+# Do not need to run this every time
 set_api_key("<CensusMapper_e6c6d57ebc92d3b6b6d5abeb72951cfd>", install=TRUE)
 readRenviron("~/.Renviron")
 
-#Visualization of interventions ------------------------------------------------
-#Map set by PDQ-----------------------------------------------------------------
+# Visualization of interventions ------------------------------------------------
+# Map set by PDQ-----------------------------------------------------------------
 
-#Step 1: Putting PDQ and crimes together (notice that this dataset has less data)
+# Step 1: Putting PDQ and crimes together (notice that this dataset has less data)
 int_PDQ <- st_join(PDQ_sf,int %>% select(-PDQ))
 
 #Map 1: Number of interventions by PDQ per category all years combined (2015-2020)
@@ -66,11 +66,11 @@ int_PDQ %>%
   ggplot()+
   geom_sf(aes(fill=PDQ_total_number_intervention), color="transparent")+
   theme_void()+
-  scale_fill_gradientn(name="Number of crimes 2015-2020",
+  scale_fill_gradientn(name="Number of crimes 2015-2020 at the precinct level",
                        colors=col_palette[c(4, 1, 9)])+
   facet_wrap(~CATEGORIE)
 
-#Map 2: Mischief by PDQ per year (2015-2020)
+# Map 2: Mischief by PDQ per year (2015-2020)
 
 int_PDQ %>% 
   mutate(DATE = year(DATE)) %>% 
@@ -83,10 +83,10 @@ int_PDQ %>%
   theme_void()+
   scale_fill_gradientn(name="Number of crimes",
                        colors=pal)+
-  labs(title="Number of mischief crimes by PDQ per year")+
+  labs(title="Number of mischief crimes per precinct per year")+
   facet_wrap(~DATE)
 
-#Map 3: Mischief per crimes per PDQ
+# Map 3: Mischief per crimes per PDQ
 
 PDQ_total_interventions <-
   int_PDQ %>% 
@@ -114,10 +114,10 @@ PDQ_total_mischief %>%
   scale_fill_gradientn(name="Percentage mischief per total crimes (%)",
                        colors=pal,
                        labels = scales::percent)+
-  labs(title="Percentage of mischief out of total crimes by PDQ per year")+
+  labs(title="Percentage of mischief out of total crimes per precinct per year")+
   facet_wrap(~DATE)
 
-#Map 4: Ratio mischiefs per non-discretionary crimes per PDQ
+# Map 4: Ratio mischiefs per non-discretionary crimes per PDQ
 
 PDQ_total_interventions_minus_mischiefs <-
   int_PDQ %>% 
@@ -138,10 +138,10 @@ PDQ_total_mischief %>%
   scale_fill_gradientn(name="Ratio of mischief to less discretionary crime)",
                        colors=pal)+
   labs(title="Ratio of mischief crimes to other less discretionary crimes 
-       by PDQ per year")+
+       per precinct per year")+
   facet_wrap(~DATE)
 
-#Map 5: Mischiefs by PDQ per total mischiefs
+# Map 5: Mischiefs by PDQ per total mischiefs
 
 PDQ_total_mischief_island <-
   int_PDQ %>% 
@@ -159,14 +159,14 @@ total_mefait %>%
   ggplot()+
   geom_sf(aes(fill=PDQ_share_mischief_total_mischief), color="transparent")+
   theme_void()+
-  scale_fill_gradientn(name="Percentage mischief crimes by PDQ per total mischief crimes",
+  scale_fill_gradientn(name="Percentage mischief crimes by precinct per total mischief crimes",
                        colors = pal,
                        labels = scales::percent)+
-  labs(title="Share of mischief crimes per PDQ by PDQ per year")+
+  labs(title="Share of mischief crimes per precinct per year")+
   facet_wrap(~DATE)
 
-#Map set per category of crime
-#Map 6.1: Vol de vehicule a moteur -> Theft of motor vehicle
+# Map set per category of crime
+# Map 6.1: Vol de vehicule a moteur -> Theft of motor vehicle
 
 int_PDQ %>% 
   filter(CATEGORIE == "Vol de vehicule a moteur") %>% 
@@ -179,10 +179,10 @@ int_PDQ %>%
   theme_void()+
   scale_fill_gradientn(name="Number of interventions",
                        colors=col_palette[c(4, 1, 9)])+
-  labs(title="Number of motor vehicule theft by PDQ per year")+
+  labs(title="Number of motor vehicule theft per precinct per year")+
   facet_wrap(~DATE)
 
-#Map 6.2: Vols qualifies -> Skilled thefts
+# Map 6.2: Vols qualifies -> Skilled thefts
 
 int_PDQ %>% 
   filter(CATEGORIE == "Vols qualifies") %>% 
@@ -195,10 +195,10 @@ int_PDQ %>%
   theme_void()+
   scale_fill_gradientn(name="Number of interventions",
                        colors=col_palette[c(4, 1, 9)])+
-  labs(title="Number of skilled thefts by PDQ per year")+
+  labs(title="Number of skilled thefts per precinct per year")+
   facet_wrap(~DATE)
 
-#Map 6.3: Vol dans / sur vehicule a moteur -> Thefts of/in motor vehicles
+# Map 6.3: Vol dans / sur vehicule a moteur -> Thefts of/in motor vehicles
 
 int_PDQ %>% 
   filter(CATEGORIE == "Vol dans / sur vehicule a moteur") %>% 
@@ -211,10 +211,10 @@ int_PDQ %>%
   theme_void()+
   scale_fill_gradientn(name="Number of interventions",
                        colors=col_palette[c(4, 1, 9)])+
-  labs(title="Number of thefts of/in motor vehicles by PDQ per year")+
+  labs(title="Number of thefts of/in motor vehicles per precinct per year")+
   facet_wrap(~DATE)
 
-#Map 6.4: Infractions entrainant la mort (NEED TO FIX BORDERS)
+# Map 6.4: Infractions entrainant la mort (NEED TO FIX BORDERS)
 
 int_PDQ %>% 
   filter(CATEGORIE == "Infractions entrainant la mort") %>% 
@@ -227,10 +227,10 @@ int_PDQ %>%
   theme_void()+
   scale_fill_gradientn(name="Number of interventions",
                        colors=col_palette[c(4, 1, 9)])+
-  labs(title="Number of offenses causing death by PDQ per year")+
+  labs(title="Number of offenses causing death per precinct per year")+
   facet_wrap(~DATE)
 
-#Map 6.5: Introduction -> Break-ins/thefts of firearms in residences
+# Map 6.5: Introduction -> Break-ins/thefts of firearms in residences
 
 int_PDQ %>% 
   filter(CATEGORIE == "Introduction") %>% 
@@ -243,10 +243,10 @@ int_PDQ %>%
   theme_void()+
   scale_fill_gradientn(name="Number of interventions",
                        colors=col_palette[c(4, 1, 9)])+
-  labs(title="Number of break-ins/thefts of firearms in residences by PDQ per year")+
+  labs(title="Number of break-ins/thefts of firearms in residences per precinct per year")+
   facet_wrap(~DATE)
 
-#Map 7: Map set by year and PDQ (facet group by PDQ and year)
+# Map 7: Map set by year and PDQ (facet group by PDQ and year)
 
 int_PDQ %>% 
   mutate(DATE=year(DATE)) %>%
@@ -257,18 +257,18 @@ int_PDQ %>%
   geom_sf(aes(fill=number_intervention))+
   scale_fill_gradient2(low="green",mid="blue", high="red")+
   theme_void()+
-  labs(title="Sum of police interventions per PDQ per year")+
+  labs(title="Sum of police interventions per precinct per year")+
   labs(fill="Number of interventions")+
   facet_wrap(~DATE)
 
-#Map set by CT------------------------------------------------------------------
+# Map set by CT------------------------------------------------------------------
 
-#Step 1: Merge CT and int data sets
+# Step 1: Merge CT and int data sets
 int_CT <- st_join(CT, int)
 
 #the first one in the join is the geometry that you are keeping
 
-#Map 1: Mischief crimes per capita CT level
+# Map 1: Mischief crimes per capita CT level
 int_CT %>% 
   st_filter(CT) %>% 
   mutate(DATE = year(DATE)) %>% 
@@ -281,13 +281,13 @@ int_CT %>%
   ggplot()+
   geom_sf(data=province, fill="grey90", color=NA)+
   geom_sf(aes(fill=int_density_CT),color=NA)+
-  scale_fill_gradientn(name="Number of mischiefs by 100 people",
+  scale_fill_gradientn(name="Crimes per 100 people",
                        colors=col_palette[c(4,1,9)],
                        limits = c(0,2 ), 
                        oob = scales::squish, 
                        na.value = "grey90")+
   coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
-  ggtitle("Mischief crimes per 100 people (CT level)")+
+  ggtitle("Mischief crimes per 100 people (Census Tract level)")+
   theme_void()+facet_wrap(~DATE)
 
 #Map 2: Number of crimes per 100 people by CT per category 2019
@@ -317,10 +317,10 @@ CT_crimes_per100ppl_per_category_2019 %>%
                        na.value = "grey90",
                        oob = scales::squish)+
   coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
-  ggtitle("Number of crimes per 100 people per category in 2019 (Census Track level)")+
+  ggtitle("Number of crimes per 100 people per category in 2019 (Census Tract level)")+
   facet_wrap(~CATEGORIE, 
              labeller = labeller(CATEGORIE= c("Mefait" = "Mischief",
-                                  "Introduction" = "Break in",
+                                  "Introduction" = "Break-in",
                                   "Vol dans / sur vehicule a moteur" = "Theft of/in a motor vehicle",
                                   "Vols qualifies"="Skilled thefts",
                                   "Vol de vehicule a moteur"="Theft of motor vehicle",
@@ -338,9 +338,9 @@ CT_crimes_per100ppl_per_category_2019 %>%
                        na.value = "grey90",
                        oob = scales::squish)+
   coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
-  ggtitle("Absolute number of crimes per category in 2019 (Census Track level)")+
+  ggtitle("Absolute number of crimes per category in 2019 (Census Tract level)")+
   facet_wrap(~CATEGORIE, labeller = labeller(CATEGORIE= c("Mefait" = "Mischief",
-                                                          "Introduction" = "Break in",
+                                                          "Introduction" = "Break-in",
                                                           "Vol dans / sur vehicule a moteur" = "Theft of/in a motor vehicle",
                                                           "Vols qualifies"="Skilled thefts",
                                                           "Vol de vehicule a moteur"="Theft of motor vehicle",
@@ -365,7 +365,7 @@ int_CT %>%
                        colors=col_palette[c(4, 1, 9)],
                        na.value = "grey90")+
   coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
-  ggtitle("Absolute number of motor vehicle thefts by year (Census Track level)")+
+  ggtitle("Absolute number of motor vehicle thefts by year (Census Tract level)")+
   facet_wrap(~DATE)
 
 #With an adjusted scale (only 6 CT had values over 100)
@@ -386,7 +386,7 @@ int_CT %>%
                        limits = c(0,100),
                        oob = scales::squish)+
   coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
-  ggtitle("Absolute number of motor vehicle thefts by year (Census Track level) - Max = 100")+
+  ggtitle("Absolute number of motor vehicle thefts by year (Census Tract level) - Max = 100")+
   facet_wrap(~DATE)
 
 #Map 3.2: Vols qualifies -> Skilled thefts
@@ -406,7 +406,7 @@ int_CT %>%
                        na.value = "grey90",
                        oob = scales::squish)+
   coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
-  ggtitle("Absolute number of skilled thefts by year (Census Track level)")+
+  ggtitle("Absolute number of skilled thefts by year (Census Tract level)")+
   facet_wrap(~DATE)
 
 # Map 3.3: Vol dans / sur vehicule a moteur -> Thefts of/in motor vehicles
@@ -426,7 +426,7 @@ int_CT %>%
                        na.value = "grey90",
                        oob = scales::squish)+
   coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
-  ggtitle("Absolute number of thefts of/in motor vehicles by year (Census Track level)")+
+  ggtitle("Absolute number of thefts of/in motor vehicles by year (Census Tract level)")+
   facet_wrap(~DATE)
 
 # removing outliers (20 values above 100)
@@ -446,7 +446,7 @@ int_CT %>%
                        limits = c(0,100),
                        oob = scales::squish)+
   coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
-  ggtitle("Absolute number of thefts of/in motor vehicles by year (Census Track level) - Max value = 100")+
+  ggtitle("Absolute number of thefts of/in motor vehicles by year (Census Tract level) - Max value = 100")+
   facet_wrap(~DATE)
 
 # Map 3.4: Infractions entrainant la mort -> Offenses causing death
@@ -466,7 +466,7 @@ int_CT %>%
                        na.value = "grey90",
                        oob = scales::squish)+
   coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
-  ggtitle("Absolute number of offenses causing death by year (Census Track level)")+
+  ggtitle("Absolute number of offenses causing death by year (Census Tract level)")+
   facet_wrap(~DATE)
 
 #Map 3.5: Introduction -> Break-ins/thefts of firearms in residences
@@ -489,7 +489,7 @@ int_CT %>%
                        limits = c(0,100),
                        oob = scales::squish)+
   coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
-  ggtitle("Absolute number of break-ins/thefts of firearms in residences by year (Census Track level)")+
+  ggtitle("Absolute number of break-ins/thefts of firearms in residences by year (Census Tract level)")+
   facet_wrap(~DATE)
 
 #Map 3.6: Mefaits -> Mischief
@@ -511,16 +511,17 @@ int_CT %>%
                        limits = c(0,100),
                        oob = scales::squish)+
   coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
-  ggtitle("Absolute number of mischief crimes by year (Census Track level)")+
+  ggtitle("Absolute number of mischief crimes by year (Census Tract level)")+
   facet_wrap(~DATE)
 
 
-#Map set by DA------------------------------------------------------------------
+# Map set by DA------------------------------------------------------------------
 
-#Step 1: Merge DA and int data sets
+# Step 1: Merge DA and int data sets
 int_DA <- st_join(DA, int)
 
 #Map 1: Mischief crimes per capita
+
 int_DA %>% 
   st_filter(DA) %>% 
   mutate(DATE = year(DATE)) %>% 
@@ -537,9 +538,10 @@ int_DA %>%
                        limits = c(0,2 ), oob = scales::squish)+
   theme_void()+facet_wrap(~DATE)
 
-#Bivariate maps-----------------------------------------------------------------
+# Bivariate maps-----------------------------------------------------------------
 
-#Step 1: Load libraries
+# Step 1: Load libraries
+
 library(biscale)
 library(scales)
 library(ggplot2)
@@ -548,7 +550,7 @@ library(grid)
 library(gridGraphics)
 library(patchwork)
 
-#Step 2: Set the bivariate color palette
+# Step 2: Set the bivariate color palette
 
 bivar <- bi_pal_manual(val_1_1 = "#e8e8e8",
                        val_1_2 = "#b8d6be",
@@ -562,7 +564,7 @@ bivar <- bi_pal_manual(val_1_1 = "#e8e8e8",
 
 show_col(bivar) #to show the bivar color palette
 
-#Step 3: Prepare the dataset to display in a bivariate choropleth map
+# Step 3: Prepare the dataset to display in a bivariate choropleth map
 
 # Bivariate maps CT level--------------------------------------------------------
 
@@ -689,6 +691,7 @@ CT_bi_legend_lowincome_mischiefs_per100ppl_2019 <- bi_legend(pal = bivar,
                                                          size = 8)
 # Percentage of mischief\ncrimes out of all crimes or
 # Mischief crimes per 100 people
+
 CT_final_bivarite_map_lowincome_mischief_per100ppl_2019 <- 
   CT_bivarite_map_lowincome_mischief_per100ppl_2019 + 
   inset_element(CT_bi_legend_lowincome_mischiefs_per100ppl_2019 , left = 0, bottom = 0.6, right = 0.4, top = 1)
@@ -782,6 +785,7 @@ DA_bi_legend_immigrant_mischiefs_2019 <- bi_legend(pal = bivar,
                                                xlab = "Number of mischief crimes per 100 population",
                                                ylab = "Percentage immigrants",
                                                size = 8)
+
 DA_final_bivarite_map_immigrant_mischiefsper100ppl <- 
   DA_bivarite_map_immigrant_mischiefs_2019 + 
   inset_element(DA_bi_legend_immigrant_mischiefs_2019, left = 0, bottom = 0.6, right = 0.4, top = 1)
@@ -946,6 +950,7 @@ CT_int_plots_3 <-
   mutate(CT_mischief_share_2019=CT_n_mischiefs_2019/CT_n_int_total_2019)
   
 #run this if you want to use CT_int_plots_4 for the scatterplot
+
 CT_int_plots_4 <-
 left_join(CT_int_plots_3, CT, by="GeoUID") %>% 
   filter(population>50) %>% 
@@ -953,6 +958,7 @@ left_join(CT_int_plots_3, CT, by="GeoUID") %>%
   mutate(p_low_income_AT=p_low_income_AT/100) 
 
 #run this if you want to use CT_int_plots_4 for bivariate maps
+
 CT_int_plots_4 <-
   left_join(CT_int_plots_3, CT, by="GeoUID") %>% 
   filter(population>50) %>% 
@@ -960,6 +966,7 @@ CT_int_plots_4 <-
   st_as_sf()
 
 # Now you can play with int_CT_plots_4   
+
 p1 <- ggplot(data=CT_int_plots_4, aes (x=p_immigrants, y =CT_n_mischiefs_per100ppl))+
   geom_point()+
   geom_smooth(method=lm)+ #Add "se=FALSE" for no confidence boundaries
@@ -972,9 +979,9 @@ p1 <- ggplot(data=CT_int_plots_4, aes (x=p_immigrants, y =CT_n_mischiefs_per100p
   #xlim(c())
   #ylim(c())
   
-  # change y between CT_mischief_share_2019 (aka: Percentage of mischief crimes out of all crimes)
+# change y between CT_mischief_share_2019 (aka: Percentage of mischief crimes out of all crimes)
 # and CT_n_mischiefs_per100ppl (Mischief crimes per 100 people)
-  # x can be either p_unsuitable, p_vm, p_immigrants, p_aboriginal, p_low_income_AT
+# x can be either p_unsuitable, p_vm, p_immigrants, p_aboriginal, p_low_income_AT
   
 # plot with R2 equation
   plot_1 <- p1 +
