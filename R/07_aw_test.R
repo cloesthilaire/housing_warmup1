@@ -1,5 +1,8 @@
 View(cancensus::list_census_vectors("CA06"))
 
+DA <- DA %>% 
+  mutate(p_low_income_AT = p_low_income_AT/100)
+
 DA_06_test <-
   get_census(
     dataset = "CA06", regions = list(CSD = c("2466023")), level = "DA",
@@ -21,7 +24,7 @@ DA_06_test <-
               "bachelor", "above_bachelor", "education_total",
               "geometry")) %>% 
   mutate(bachelor_above = bachelor + above_bachelor,
-         low_income = low_income_AT_prop * low_income_total
+         low_income = (low_income_AT_prop/100) * low_income_total
          # p_renter = renter / parent_tenure, 
          # p_repairs = major_repairs / parent_repairs,
          # p_thirty_renter = thirty_renter / parent_thirty,
@@ -78,7 +81,8 @@ DA_06_to_16 <-
     HH_income_AT_median = 
       weighted.mean(HH_income_AT_median, HH_income_total, na.rm = TRUE),
     across(all_of(agg_list), sum, na.rm = TRUE)) %>% 
-  mutate(across(where(is.numeric), ~replace(., is.nan(.), 0)))
+  mutate(across(where(is.numeric), ~replace(., is.nan(.), 0))) %>% 
+  mutate()
 
 
 DA_06_interpolated <- 
@@ -89,7 +93,7 @@ DA_06_interpolated <-
          value_dwellings_avg_06 = value_dwellings_avg,
          gross_rent_avg_06 = gross_rent_avg,
          HH_income_AT_median_06 = HH_income_AT_median) %>% 
-  mutate(p_low_income_AT_06 = low_income * low_income_total,
+  mutate(p_low_income_AT_06 = low_income / low_income_total,
          p_renter_06 = renter_06 / tenure_total,
          p_repairs_06 = major_repairs / repairs_total,
          p_thirty_renter_06 = thirty_renter / renter_total,
@@ -129,7 +133,7 @@ var_DA_06_16 <-
 #select(ID, var_dwellings:var_prop_aboriginal)
 
 
-save(var_DA_06_16,   
+save(var_DA_06_16, DA_06_test,  
      file = "output/var_06_16.Rdata")
 
 var_DA_06_16 %>% 
