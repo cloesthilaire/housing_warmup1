@@ -5,10 +5,11 @@ load("output/CTALEXIA.Rdata")
 load("output/DA.Rdata")
 source("R/01_startup.R")
 load("output/province.Rdata")
+load("output/geometry.Rdata")
 
 # Load the Ãtablissements alimentaires data from DonnÃ©es Montreal
 # dataset is from 1988 to 2021.06.28
-
+# the type category is case sensitive 
 food_businesses_raw <-
   read_sf("data/businesses/businesses.shp") %>% 
   st_transform(32618) %>% 
@@ -70,6 +71,12 @@ food_businesses%>%
 # 2008=1841, 2009=2162, 2010=2547, 2011=2017, 2012=2731, 2013=2705, 2014=2835,
 # 2015=3030, 2016=2931, 2017=2882, 2018=3628, 2019=4161, 2020=3334, 2021=1807
 
+
+# Determining how many businesses per category
+food_businesses%>% 
+  count(type) %>% 
+  View()
+
 # To clean the groups before grouping
 
 types_to_remove <- c("Atelier de conditionnement de produits de la pêche", "Cabane à sucre",
@@ -84,8 +91,6 @@ food_businesses_test <-
   filter(!str_detect(type, "Entrepôt")) %>% 
   filter(!str_detect(type, "Usine"))
 
-#remove more categories?
-
 groups <- 
   food_businesses_test %>% 
   select(-city, -statut) %>% 
@@ -96,21 +101,78 @@ groups <-
 # Load grouped data
 load("output/grouped_addresses.Rdata")
 
+# Kosta's grouping--------------------------------------------------------------
 
+# types to remove
+types_to_remove_kosta <- c("Atelier de conditionnement de produits de la pêche", "Cabane à sucre",
+                     "Camion de distribution de produits carnés", "Camion de distribution de produits de la pêche",
+                     "Camion de distribution de produits laitiers", "Camp de vacances", "Hôpital", "Site d'eau vendue au volume",
+                     "Véhicule livraison", "Vendeur itinérant", "Distributrice automatique", "École/mesures alimentaires", 
+                     "Événements spéciaux", "Autres", "Cafétéria institution d'enseignement",
+                     "Camion-cuisine", "Cantine mobile", "Centre d'accueil", "Cuisine domestique", 
+                     "Découpe à forfait", "Distributeur en gros de fruits et légumes frais",
+                     "Distributeur en gros de produits de la pêche", "Distributeur en gros de produits mixtes",
+                     "Distributeur en gros de produits carnés","Distributeur en gros de produits laitiers",
+                     "Distributeur en gros de succédanés de produits laitiers", "Distributeur en gros d'eau",
+                     "Distributrice automatique","Entrepôt", "Entrepôt de produits laitiers", "Entrepôt de produits mixtes", 
+                     "Entrepôt de produits végétaux", "Entrepôt d'eau", "Fabrique de boissons gazeuses",
+                     "Fruits et légumes prêts à l'emploi", "Garderie","Local de préparation", 
+                     "Marché public", "Noix et arachides", "Organisme d'aide alimentaire",
+                     "Pâtes alimentaires", "Produits à base de protéines végétales","Résidences de personnes âgées",
+                     "Ramasseur de lait", "Site d'eau vendue au volume", "Traiteur", "Usine d'embouteillage d'eau",
+                     "Usine de produits laitiers", "Usine de produits marins", "Usine d'emballage de glace",
+                     "Usine produit autre", "Kiosque", "Résidence de personnes âgées")
+
+# recreate dataframe and remove types
+
+food_businesses_kosta <-food_businesses_sf %>% 
+  filter(!type %in% types_to_remove_kosta )
+
+
+# restaurant category
+#restaurants_kosta <-food_businesses %>% 
+ # filter(type=="Restaurant")
+
+# cafe category
+keep_cafes_kosta <-c("Bar laitier","Bar laitier saisonnier","Bar salon, taverne",
+                    "Brasserie","Café, thé, infusion, tisane","Cafétéria","Confiserie/chocolaterie",
+                     "Restaurant mets pour emporter","Restaurant service rapide","Casse-croûte")
+
+food_businesses_kosta <-
+food_businesses_kosta %>%  
+  mutate(type = ifelse(type %in% keep_cafes_kosta, "Cafe", type)) 
+
+# food stores
+
+keep_foodstores_kosta <-c("Épicerie", "Épicerie avec préparation", "Aliments naturels",
+                          "Boucherie","Boucherie-épicerie","Boulangerie","Charcuterie",
+                          "Charcuterie/fromage","Pâtisserie","Pâtisserie-dépôt",
+                          "Poissonnerie","Supermarché","Magasin à rayons")
+
+food_businesses_kosta <-
+  food_businesses_kosta %>%  
+  mutate(type = ifelse(type %in% keep_foodstores_kosta, "Food store", type)) 
+
+# verify that only the 3 categories were kept
+
+unique(food_businesses_kosta$type) 
+
+# Bar charts Kosta--------------------------------------------------------------
+
+# Merge the borough and food businesses data together
+
+food_businesses_kosta_boroughs <- st_join(food_businesses_kosta, boroughs_raw) %>% 
+  st_drop_geometry()
+
+# If you join by putting the boroughs_raw data first, there will be less data, going
+# from 31 717 to 28 373
+
+#Cloe can work from here--------------------------------------------------------
+  
 # Statistical Analysis ---------------------------------------------------------
 
 # Bar charts
 
-# This code does not work, still keeping it for further reference
-#food_businesses %>% 
-#  mutate(date = year(date)) %>% 
-#  ggplot(aes())+
-#geom_bar(mapping=NULL,x="statut", stat="identity", position ="stack",
-#         width = NULL,
-#         na.rm = FALSE,
-#         orientation = NA,
-#         show.legend = NA)+
-#  facet_wrap(year)
 
 # This graph works
 
@@ -128,27 +190,4 @@ food_businesses %>%
   geom_bar(position = "fill",stat = "identity")
 
 
-
-# Map 1: 1988-1993
-# 1561 datapoints
-
-# 1996 to do gentrification start
-# temporal coverage 2011 a aujourd'hui
-
-food_businesses_sf %>% 
-  filter(year <=1993) %>% 
-  #group_by(latitude, longitude) %>% 
-  #summarize(n_businesses_1988_1993=n()) %>% 
-  ggplot()+
-  geom_sf(data=province, fill="grey90", color=NA)+
-  geom_sf(aes(),color=NA)+
-  #geom_sf(aes(n_businesses_1988_1993),color=NA)+
-  #scale_fill_gradientn(name="Crimes per 100 people",
-  #colors=col_palette[c(4,1,9)],
-  #limits = c(0,2 ), 
-  #oob = scales::squish, 
-  #na.value = "grey90")+
-  #coord_sf(xlim=c(582280,618631), ylim=c(5029848, 5062237), expand=FALSE)+
-  #ggtitle("Mischief crimes per 100 people (Census Tract level)")+
-  theme_void()+facet_wrap(~type, ~statut)
 
