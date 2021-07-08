@@ -1,4 +1,8 @@
 # Step 1: Load datasets --------------------------------------------------------
+
+# Load libraries
+library(dplyr)
+
 # Load the CT and DA datasets
 
 load("output/CTALEXIA.Rdata")
@@ -161,13 +165,28 @@ unique(food_businesses_kosta$type)
 
 # Merge the borough and food businesses data together
 
-food_businesses_kosta_boroughs <- st_join(food_businesses_kosta, boroughs_raw) %>% 
+food_businesses_kosta_boroughs <- st_join(food_businesses_kosta, boroughs) %>% 
   st_drop_geometry()
 
 # If you join by putting the boroughs_raw data first, there will be less data, going
 # from 31 717 to 28 373
 
-#Cloe can work from here--------------------------------------------------------
+open_closed_kosta <- c("Ouvert", "Fermé")
+
+food_businesses_kosta_boroughs %>% 
+  mutate(date = year(date)) %>% 
+  #need to do something else with the date
+  filter(statut %in% open_closed_kosta) %>% 
+  group_by(borough,date, statut, type) %>% 
+  summarize(statut_per_borough= n()) %>% 
+  mutate(statut_per_borough_per_100_dwellings = statut_per_borough/(dwellings/100)) %>%
+  ggplot()+
+  geom_histogram(aes(x = date, fill = statut), stat="count")+
+    facet_wrap(borough)
+
+
+
+
   
 # Statistical Analysis ---------------------------------------------------------
 
