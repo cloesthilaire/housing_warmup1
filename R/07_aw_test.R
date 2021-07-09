@@ -82,7 +82,7 @@ DA_06_to_16 <-
       weighted.mean(HH_income_AT_median, HH_income_total, na.rm = TRUE),
     across(all_of(agg_list), sum, na.rm = TRUE)) %>% 
   mutate(across(where(is.numeric), ~replace(., is.nan(.), 0))) %>% 
-  mutate()
+  mutate(across(all_of(agg_list), ~if_else(.x < 5, 0, .x)))
 
 
 DA_06_interpolated <- 
@@ -129,10 +129,16 @@ var_DA_06_16 <-
          var_prop_mobility_five_years = (p_mobility_five_years - p_mobility_five_years_06) / p_mobility_five_years_06,
          var_prop_vm = (p_vm - p_vm_06) / p_vm_06,
          var_prop_immigrants = (p_immigrants - p_immigrants_06) / p_immigrants_06,
-         var_prop_aboriginal = (p_aboriginal - p_aboriginal_06) / p_aboriginal_06) #%>% 
-#select(ID, var_dwellings:var_prop_aboriginal)
+         var_prop_aboriginal = (p_aboriginal - p_aboriginal_06) / p_aboriginal_06)
 
+var_list <- str_subset(names(var_DA_06_16), "var") 
 
+var_DA_06_16 %>% 
+  mutate(across(all_of(var_list), ~replace(., is.nan(.), 0))) %>% 
+  mutate(across(all_of(var_list), ~replace(., is.infinite(.), NA))) %>% 
+  View()
+
+is.infinite()
 save(var_DA_06_16, DA_06_test,  
      file = "output/var_06_16.Rdata")
 
@@ -198,5 +204,21 @@ var_DA_06_16 %>%
 
 
 
+DA <- 
+  DA %>% 
+  mutate(p_low_income_AT = p_low_income_AT / 100)
+
+# prop_list <- str_subset(names(DA), "p_") 
+# 
+# DA[ ,which((names(DA) %in% prop_list)==TRUE)] %>% 
+#   st_drop_geometry() %>% 
+#   filter(across(where(is.numeric), ~ .x > 0))
+# #as.matrix() %>% 
+# lapply(., min, na.rm = TRUE)
+# 
+# ?lapply
+# ?across
+# ?filter_at
+# ?all_vars  
 
 

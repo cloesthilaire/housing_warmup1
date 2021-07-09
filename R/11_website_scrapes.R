@@ -46,3 +46,19 @@ read_html(website_urls[[5]]) %>%
   html_element("p") %>% 
   html_text2() 
 
+
+website_text <- read_csv("output/websites_dataframe_with_text")
+
+sample <- website_text %>% distinct(Website, .keep_all = TRUE) %>% slice(1:3)
+
+text <- str_remove_all(sample$text, "<.*?>") 
+
+text <- str_remove_all(text, "\\{.*?\\}")
+
+text <- str_remove_all(text, "\\(.*?\\)")
+
+text <- str_replace_all(text, "\\n", " ")
+
+text
+
+
