@@ -59,8 +59,8 @@ food_businesses_sf <-
 food_businesses_sf <- 
   food_businesses_sf %>% 
   filter(type != "Ephemeral") %>% 
-  filter(type != "Institutional") %>% 
-  filter(type != "Industrial") %>% 
+  #filter(type != "Institutional") %>% 
+  #filter(type != "Industrial") %>% 
   filter(type != "Other") 
 
 # Join with borough --------------------------------------------------
@@ -273,141 +273,232 @@ group15 <-
   filter(group_id == 15)  %>% 
   select(-group_id)
 
-grouped_addresses <- 
-  group1 %>% 
-  left_join(., group2, by = "address") %>% 
-  set_names(c("id1", "name1", "address", "type1", "date1", 
-              "id2", "name2", "type2", "date2")) %>% 
-  left_join(., group3, by = "address") %>% 
-  set_names(c("id1", "name1", "address", "type1", "date1", 
-              "id2", "name2", "type2", "date2", 
-              "id3", "name3", "type3", "date3")) %>% 
-  left_join(., group4, by = "address") %>% 
-  set_names(c("id1", "name1", "address", "type1", "date1", 
-              "id2", "name2", "type2", "date2", 
-              "id3", "name3", "type3", "date3", 
-              "id4", "name4", "type4", "date4")) %>% 
-  left_join(., group5, by = "address") %>% 
-  set_names(c("id1", "name1", "address", "type1", "date1", 
-              "id2", "name2", "type2", "date2", 
-              "id3", "name3", "type3", "date3", 
-              "id4", "name4", "type4", "date4",
-              "id5", "name5", "type5", "date5")) %>% 
-  left_join(., group6, by = "address") %>% 
-  set_names(c("id1", "name1", "address", "type1", "date1", 
-              "id2", "name2", "type2", "date2", 
-              "id3", "name3", "type3", "date3", 
-              "id4", "name4", "type4", "date4",
-              "id5", "name5", "type5", "date5",
-              "id6", "name6", "type6", "date6")) %>% 
-  left_join(., group7, by = "address") %>% 
-  set_names(c("id1", "name1", "address", "type1", "date1", 
-              "id2", "name2", "type2", "date2", 
-              "id3", "name3", "type3", "date3", 
-              "id4", "name4", "type4", "date4",
-              "id5", "name5", "type5", "date5",
-              "id6", "name6", "type6", "date6",
-              "id7", "name7", "type7", "date7")) %>% 
-  left_join(., group8, by = "address") %>% 
-  set_names(c("id1", "name1", "address", "type1", "date1", 
-              "id2", "name2", "type2", "date2", 
-              "id3", "name3", "type3", "date3", 
-              "id4", "name4", "type4", "date4",
-              "id5", "name5", "type5", "date5",
-              "id6", "name6", "type6", "date6",
-              "id7", "name7", "type7", "date7",
-              "id8", "name8", "type8", "date8")) %>% 
-  left_join(., group9, by = "address") %>% 
-  set_names(c("id1", "name1", "address", "type1", "date1", 
-              "id2", "name2", "type2", "date2", 
-              "id3", "name3", "type3", "date3", 
-              "id4", "name4", "type4", "date4",
-              "id5", "name5", "type5", "date5",
-              "id6", "name6", "type6", "date6",
-              "id7", "name7", "type7", "date7",
-              "id8", "name8", "type8", "date8",
-              "id9", "name9", "type9", "date9")) %>% 
-  left_join(., group10, by = "address") %>% 
-  set_names(c("id1", "name1", "address", "type1", "date1", 
-              "id2", "name2", "type2", "date2", 
-              "id3", "name3", "type3", "date3", 
-              "id4", "name4", "type4", "date4",
-              "id5", "name5", "type5", "date5",
-              "id6", "name6", "type6", "date6",
-              "id7", "name7", "type7", "date7",
-              "id8", "name8", "type8", "date8",
-              "id9", "name9", "type9", "date9",
-              "id10", "name10", "type10", "date10")) %>% 
-  left_join(., group11, by = "address") %>% 
-  set_names(c("id1", "name1", "address", "type1", "date1", 
-              "id2", "name2", "type2", "date2", 
-              "id3", "name3", "type3", "date3", 
-              "id4", "name4", "type4", "date4",
-              "id5", "name5", "type5", "date5",
-              "id6", "name6", "type6", "date6",
-              "id7", "name7", "type7", "date7",
-              "id8", "name8", "type8", "date8",
-              "id9", "name9", "type9", "date9",
-              "id10", "name10", "type10", "date10",
-              "id11", "name11", "type11", "date11")) %>% 
-  left_join(., group12, by = "address") %>% 
-  set_names(c("id1", "name1", "address", "type1", "date1", 
-              "id2", "name2", "type2", "date2", 
-              "id3", "name3", "type3", "date3", 
-              "id4", "name4", "type4", "date4",
-              "id5", "name5", "type5", "date5",
-              "id6", "name6", "type6", "date6",
-              "id7", "name7", "type7", "date7",
-              "id8", "name8", "type8", "date8",
-              "id9", "name9", "type9", "date9",
-              "id10", "name10", "type10", "date10",
-              "id11", "name11", "type11", "date11",
-              "id12", "name12", "type12", "date12")) %>% 
-  left_join(., group13, by = "address") %>% 
-  set_names(c("id1", "name1", "address", "type1", "date1", 
-              "id2", "name2", "type2", "date2", 
-              "id3", "name3", "type3", "date3", 
-              "id4", "name4", "type4", "date4",
-              "id5", "name5", "type5", "date5",
-              "id6", "name6", "type6", "date6",
-              "id7", "name7", "type7", "date7",
-              "id8", "name8", "type8", "date8",
-              "id9", "name9", "type9", "date9",
-              "id10", "name10", "type10", "date10",
-              "id11", "name11", "type11", "date11",
-              "id12", "name12", "type12", "date12",
-              "id13", "name13", "type13", "date13")) %>% 
-  left_join(., group13, by = "address") %>% 
-  set_names(c("id1", "name1", "address", "type1", "date1", 
-              "id2", "name2", "type2", "date2", 
-              "id3", "name3", "type3", "date3", 
-              "id4", "name4", "type4", "date4",
-              "id5", "name5", "type5", "date5",
-              "id6", "name6", "type6", "date6",
-              "id7", "name7", "type7", "date7",
-              "id8", "name8", "type8", "date8",
-              "id9", "name9", "type9", "date9",
-              "id10", "name10", "type10", "date10",
-              "id11", "name11", "type11", "date11",
-              "id12", "name12", "type12", "date12",
-              "id13", "name13", "type13", "date13",
-              "id14", "name14", "type14", "date14")) %>% 
-  left_join(., group13, by = "address") %>% 
-  set_names(c("id1", "name1", "address", "type1", "date1", 
-              "id2", "name2", "type2", "date2", 
-              "id3", "name3", "type3", "date3", 
-              "id4", "name4", "type4", "date4",
-              "id5", "name5", "type5", "date5",
-              "id6", "name6", "type6", "date6",
-              "id7", "name7", "type7", "date7",
-              "id8", "name8", "type8", "date8",
-              "id9", "name9", "type9", "date9",
-              "id10", "name10", "type10", "date10",
-              "id11", "name11", "type11", "date11",
-              "id12", "name12", "type12", "date12",
-              "id13", "name13", "type13", "date13",
-              "id14", "name14", "type14", "date14",
-              "id15", "name15", "type15", "date15"))
+group1_2 <- right_join(group1, group2, by="address")
+group2_3 <- right_join(group2, group3, by="address")
+group3_4 <- right_join(group3, group4, by="address")
+group4_5 <- right_join(group4, group5, by="address")
+group5_6 <- right_join(group5, group6, by="address")
+group6_7 <- right_join(group6, group7, by="address")
+group7_8 <- right_join(group7, group8, by="address")
+group8_9 <- right_join(group8, group9, by="address")
+group9_10 <- right_join(group9, group10, by="address")
+group10_11 <- right_join(group10, group11, by="address")
+group11_12 <- right_join(group11, group12, by="address")
+group12_13 <- right_join(group12, group13, by="address")
+group13_14 <- right_join(group13, group14, by="address")
+group14_15 <- right_join(group14, group15, by="address")
 
-grouped_addresses %>% 
-  select(type1,type2,type3,type4,type5,type6,type7,type8,type9,type10) %>% View()
+switches <- 
+  rbind(group1_2, group2_3, group3_4, group4_5, group5_6,
+      group6_7, group7_8, group8_9, group9_10, group10_11,
+      group11_12, group12_13, group13_14, group14_15)
+
+# grouped_addresses <- 
+#   group1 %>% 
+#   left_join(., group2, by = "address") %>% 
+#   set_names(c("id1", "name1", "address", "type1", "date1", 
+#               "id2", "name2", "type2", "date2")) %>% 
+#   left_join(., group3, by = "address") %>% 
+#   set_names(c("id1", "name1", "address", "type1", "date1", 
+#               "id2", "name2", "type2", "date2", 
+#               "id3", "name3", "type3", "date3")) %>% 
+#   left_join(., group4, by = "address") %>% 
+#   set_names(c("id1", "name1", "address", "type1", "date1", 
+#               "id2", "name2", "type2", "date2", 
+#               "id3", "name3", "type3", "date3", 
+#               "id4", "name4", "type4", "date4")) %>% 
+#   left_join(., group5, by = "address") %>% 
+#   set_names(c("id1", "name1", "address", "type1", "date1", 
+#               "id2", "name2", "type2", "date2", 
+#               "id3", "name3", "type3", "date3", 
+#               "id4", "name4", "type4", "date4",
+#               "id5", "name5", "type5", "date5")) %>% 
+#   left_join(., group6, by = "address") %>% 
+#   set_names(c("id1", "name1", "address", "type1", "date1", 
+#               "id2", "name2", "type2", "date2", 
+#               "id3", "name3", "type3", "date3", 
+#               "id4", "name4", "type4", "date4",
+#               "id5", "name5", "type5", "date5",
+#               "id6", "name6", "type6", "date6")) %>% 
+#   left_join(., group7, by = "address") %>% 
+#   set_names(c("id1", "name1", "address", "type1", "date1", 
+#               "id2", "name2", "type2", "date2", 
+#               "id3", "name3", "type3", "date3", 
+#               "id4", "name4", "type4", "date4",
+#               "id5", "name5", "type5", "date5",
+#               "id6", "name6", "type6", "date6",
+#               "id7", "name7", "type7", "date7")) %>% 
+#   left_join(., group8, by = "address") %>% 
+#   set_names(c("id1", "name1", "address", "type1", "date1", 
+#               "id2", "name2", "type2", "date2", 
+#               "id3", "name3", "type3", "date3", 
+#               "id4", "name4", "type4", "date4",
+#               "id5", "name5", "type5", "date5",
+#               "id6", "name6", "type6", "date6",
+#               "id7", "name7", "type7", "date7",
+#               "id8", "name8", "type8", "date8")) %>% 
+#   left_join(., group9, by = "address") %>% 
+#   set_names(c("id1", "name1", "address", "type1", "date1", 
+#               "id2", "name2", "type2", "date2", 
+#               "id3", "name3", "type3", "date3", 
+#               "id4", "name4", "type4", "date4",
+#               "id5", "name5", "type5", "date5",
+#               "id6", "name6", "type6", "date6",
+#               "id7", "name7", "type7", "date7",
+#               "id8", "name8", "type8", "date8",
+#               "id9", "name9", "type9", "date9")) %>% 
+#   left_join(., group10, by = "address") %>% 
+#   set_names(c("id1", "name1", "address", "type1", "date1", 
+#               "id2", "name2", "type2", "date2", 
+#               "id3", "name3", "type3", "date3", 
+#               "id4", "name4", "type4", "date4",
+#               "id5", "name5", "type5", "date5",
+#               "id6", "name6", "type6", "date6",
+#               "id7", "name7", "type7", "date7",
+#               "id8", "name8", "type8", "date8",
+#               "id9", "name9", "type9", "date9",
+#               "id10", "name10", "type10", "date10")) %>% 
+#   left_join(., group11, by = "address") %>% 
+#   set_names(c("id1", "name1", "address", "type1", "date1", 
+#               "id2", "name2", "type2", "date2", 
+#               "id3", "name3", "type3", "date3", 
+#               "id4", "name4", "type4", "date4",
+#               "id5", "name5", "type5", "date5",
+#               "id6", "name6", "type6", "date6",
+#               "id7", "name7", "type7", "date7",
+#               "id8", "name8", "type8", "date8",
+#               "id9", "name9", "type9", "date9",
+#               "id10", "name10", "type10", "date10",
+#               "id11", "name11", "type11", "date11")) %>% 
+#   left_join(., group12, by = "address") %>% 
+#   set_names(c("id1", "name1", "address", "type1", "date1", 
+#               "id2", "name2", "type2", "date2", 
+#               "id3", "name3", "type3", "date3", 
+#               "id4", "name4", "type4", "date4",
+#               "id5", "name5", "type5", "date5",
+#               "id6", "name6", "type6", "date6",
+#               "id7", "name7", "type7", "date7",
+#               "id8", "name8", "type8", "date8",
+#               "id9", "name9", "type9", "date9",
+#               "id10", "name10", "type10", "date10",
+#               "id11", "name11", "type11", "date11",
+#               "id12", "name12", "type12", "date12")) %>% 
+#   left_join(., group13, by = "address") %>% 
+#   set_names(c("id1", "name1", "address", "type1", "date1", 
+#               "id2", "name2", "type2", "date2", 
+#               "id3", "name3", "type3", "date3", 
+#               "id4", "name4", "type4", "date4",
+#               "id5", "name5", "type5", "date5",
+#               "id6", "name6", "type6", "date6",
+#               "id7", "name7", "type7", "date7",
+#               "id8", "name8", "type8", "date8",
+#               "id9", "name9", "type9", "date9",
+#               "id10", "name10", "type10", "date10",
+#               "id11", "name11", "type11", "date11",
+#               "id12", "name12", "type12", "date12",
+#               "id13", "name13", "type13", "date13")) %>% 
+#   left_join(., group13, by = "address") %>% 
+#   set_names(c("id1", "name1", "address", "type1", "date1", 
+#               "id2", "name2", "type2", "date2", 
+#               "id3", "name3", "type3", "date3", 
+#               "id4", "name4", "type4", "date4",
+#               "id5", "name5", "type5", "date5",
+#               "id6", "name6", "type6", "date6",
+#               "id7", "name7", "type7", "date7",
+#               "id8", "name8", "type8", "date8",
+#               "id9", "name9", "type9", "date9",
+#               "id10", "name10", "type10", "date10",
+#               "id11", "name11", "type11", "date11",
+#               "id12", "name12", "type12", "date12",
+#               "id13", "name13", "type13", "date13",
+#               "id14", "name14", "type14", "date14")) %>% 
+#   left_join(., group13, by = "address") %>% 
+#   set_names(c("id1", "name1", "address", "type1", "date1", 
+#               "id2", "name2", "type2", "date2", 
+#               "id3", "name3", "type3", "date3", 
+#               "id4", "name4", "type4", "date4",
+#               "id5", "name5", "type5", "date5",
+#               "id6", "name6", "type6", "date6",
+#               "id7", "name7", "type7", "date7",
+#               "id8", "name8", "type8", "date8",
+#               "id9", "name9", "type9", "date9",
+#               "id10", "name10", "type10", "date10",
+#               "id11", "name11", "type11", "date11",
+#               "id12", "name12", "type12", "date12",
+#               "id13", "name13", "type13", "date13",
+#               "id14", "name14", "type14", "date14",
+#               "id15", "name15", "type15", "date15"))
+# 
+# grouped_addresses %>% 
+#   select(type1,type2,type3,type4,type5,type6,type7,type8,type9,type10) %>% View()
+
+unique(food_businesses$type)
+
+non_gentrifying <- c("General grocery", "Institutional", "Industrial")
+
+gentrifying <- c("Restaurants", "Bars", "Specialized", "Cafes")
+
+switches_sf <- 
+  switches %>% 
+  mutate(transition = ifelse(type.x %in% non_gentrifying & type.y %in% gentrifying, TRUE, FALSE)) %>% 
+  filter(transition == TRUE) %>% 
+  mutate(date.x = year(date.x),
+         date.y = year(date.y),
+         number_years = date.y-date.x) %>% 
+  filter(number_years <5) %>% 
+  left_join(., food_businesses_sf %>% select(address), by="address") %>%
+  st_as_sf() %>% 
+  distinct(id.x, .keep_all=TRUE) %>% 
+  filter(date.y >=2011) 
+#%>% 
+  #st_join(DA %>% select(GeoUID), .) %>% 
+  #filter(!is.na(id.x)) %>% 
+  #group_by(GeoUID, date.y) %>% 
+  #summarize(n=n()) 
+
+switches_sf %>% 
+  filter(date.y < 2021) %>% 
+  ggplot()+
+  geom_sf(data=province, fill="grey90", color=NA) +
+  geom_sf(aes(color=date.y), size=1, alpha=0.5)+
+  scale_color_viridis_c()+
+  #facet_wrap(~date.y)+
+  upgo::gg_bbox(boroughs)+
+  theme_void()
+
+switches_sf %>% 
+  st_join(boroughs, .) %>% 
+  filter(date.y < 2021) %>% 
+  mutate(dwellings_1000=dwellings/1000) %>% 
+  group_by(borough, date.y, dwellings_1000) %>% 
+  summarize(n=n(), n_density=n()/(sum(dwellings_1000)/n())) %>% 
+  ggplot()+
+  geom_sf(data=province, fill="grey90", color=NA) +
+  geom_sf(aes(fill=n_density), color=NA)+
+  scale_fill_gradientn(name="Number of switches\nper 1000 households",
+                    colors=col_palette[c(4,1,9)])+
+  facet_wrap(~date.y)+
+  upgo::gg_bbox(boroughs)+
+  theme_void()
+
+switches_sf %>% 
+  st_join(boroughs, .) %>% 
+  filter(date.y < 2021) %>% 
+  mutate(dwellings_1000=dwellings/1000) %>% 
+  group_by(borough, date.y, dwellings_1000) %>% 
+  summarize(n=n()) %>% 
+  ggplot()+
+  geom_sf(data=province, fill="grey90", color=NA) +
+  geom_sf(aes(fill=n), color=NA)+
+  scale_fill_gradientn(name="Number of switches",
+                       colors=col_palette[c(4,1,9)])+
+  facet_wrap(~date.y)+
+  upgo::gg_bbox(boroughs)+
+  theme_void()
+
+
+
+
+
+
+
