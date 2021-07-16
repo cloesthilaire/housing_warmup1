@@ -164,7 +164,7 @@ food_businesses_kosta <-
 
 # verify that only the 3 categories were kept
 
-unique(food_businesses_kosta$type) 
+unique(food_businesses_kosta$type)
 
 # Bar charts Kosta--------------------------------------------------------------
 
@@ -247,7 +247,7 @@ food_businesses_kosta_boroughs %>%
   summarize(statut_per_borough= n()) %>% 
   mutate(statut_per_borough_per_1000_dwellings = statut_per_borough/(dwellings/1000)) %>%
   ggplot()+
-  geom_line(aes(x = date, y = statut_per_borough_per_1000_dwellings, color = type))+
+  geom_smooth(aes(x = date, y = statut_per_borough_per_1000_dwellings, color = type), se=FALSE)+
   facet_wrap(~borough)+
   ggtitle("Number of open businesses per category per 1000 dwellings per year")+
   labs(x = "Year", y ="Number of businesses per 1000 dwellings", fill = "Type")
@@ -1006,12 +1006,7 @@ food_businesses_open <-
   distinct(name, address, .keep_all = TRUE) %>% 
   mutate(year = year(date)) %>% 
   filter(year != 2021) %>% 
-  mutate(name_address = paste(name, address))
-
-# food_businesses %>% 
-#   filter(statut != "Ouvert") %>% 
-#   count(name, address) %>% View()
-# distinct(name, address, .keep_all = TRUE)
+  mutate(name_address = paste(name, address)) 
 
 food_businesses_2019 <- 
   full_join(food_businesses_open, years, by="name_address") %>% 
@@ -1019,6 +1014,14 @@ food_businesses_2019 <-
   filter(year == 2019) %>% 
   left_join(., food_businesses_sf %>% select(id), by = "id") %>% 
   st_as_sf()
+
+food_businesses_2020 <- 
+  full_join(food_businesses_open, years, by="name_address") %>% 
+  mutate(year = year + (duplicates - 1)) %>%
+  filter(year == 2020) %>% 
+  left_join(., food_businesses_sf %>% select(id), by = "id") %>% 
+  st_as_sf()
+
 
 
 # Changes in type by address ------------------------------------------------------------
@@ -1126,146 +1129,13 @@ switches <-
         group6_7, group7_8, group8_9, group9_10, group10_11,
         group11_12, group12_13, group13_14, group14_15)
 
-# grouped_addresses <- 
-#   group1 %>% 
-#   left_join(., group2, by = "address") %>% 
-#   set_names(c("id1", "name1", "address", "type1", "date1", 
-#               "id2", "name2", "type2", "date2")) %>% 
-#   left_join(., group3, by = "address") %>% 
-#   set_names(c("id1", "name1", "address", "type1", "date1", 
-#               "id2", "name2", "type2", "date2", 
-#               "id3", "name3", "type3", "date3")) %>% 
-#   left_join(., group4, by = "address") %>% 
-#   set_names(c("id1", "name1", "address", "type1", "date1", 
-#               "id2", "name2", "type2", "date2", 
-#               "id3", "name3", "type3", "date3", 
-#               "id4", "name4", "type4", "date4")) %>% 
-#   left_join(., group5, by = "address") %>% 
-#   set_names(c("id1", "name1", "address", "type1", "date1", 
-#               "id2", "name2", "type2", "date2", 
-#               "id3", "name3", "type3", "date3", 
-#               "id4", "name4", "type4", "date4",
-#               "id5", "name5", "type5", "date5")) %>% 
-#   left_join(., group6, by = "address") %>% 
-#   set_names(c("id1", "name1", "address", "type1", "date1", 
-#               "id2", "name2", "type2", "date2", 
-#               "id3", "name3", "type3", "date3", 
-#               "id4", "name4", "type4", "date4",
-#               "id5", "name5", "type5", "date5",
-#               "id6", "name6", "type6", "date6")) %>% 
-#   left_join(., group7, by = "address") %>% 
-#   set_names(c("id1", "name1", "address", "type1", "date1", 
-#               "id2", "name2", "type2", "date2", 
-#               "id3", "name3", "type3", "date3", 
-#               "id4", "name4", "type4", "date4",
-#               "id5", "name5", "type5", "date5",
-#               "id6", "name6", "type6", "date6",
-#               "id7", "name7", "type7", "date7")) %>% 
-#   left_join(., group8, by = "address") %>% 
-#   set_names(c("id1", "name1", "address", "type1", "date1", 
-#               "id2", "name2", "type2", "date2", 
-#               "id3", "name3", "type3", "date3", 
-#               "id4", "name4", "type4", "date4",
-#               "id5", "name5", "type5", "date5",
-#               "id6", "name6", "type6", "date6",
-#               "id7", "name7", "type7", "date7",
-#               "id8", "name8", "type8", "date8")) %>% 
-#   left_join(., group9, by = "address") %>% 
-#   set_names(c("id1", "name1", "address", "type1", "date1", 
-#               "id2", "name2", "type2", "date2", 
-#               "id3", "name3", "type3", "date3", 
-#               "id4", "name4", "type4", "date4",
-#               "id5", "name5", "type5", "date5",
-#               "id6", "name6", "type6", "date6",
-#               "id7", "name7", "type7", "date7",
-#               "id8", "name8", "type8", "date8",
-#               "id9", "name9", "type9", "date9")) %>% 
-#   left_join(., group10, by = "address") %>% 
-#   set_names(c("id1", "name1", "address", "type1", "date1", 
-#               "id2", "name2", "type2", "date2", 
-#               "id3", "name3", "type3", "date3", 
-#               "id4", "name4", "type4", "date4",
-#               "id5", "name5", "type5", "date5",
-#               "id6", "name6", "type6", "date6",
-#               "id7", "name7", "type7", "date7",
-#               "id8", "name8", "type8", "date8",
-#               "id9", "name9", "type9", "date9",
-#               "id10", "name10", "type10", "date10")) %>% 
-#   left_join(., group11, by = "address") %>% 
-#   set_names(c("id1", "name1", "address", "type1", "date1", 
-#               "id2", "name2", "type2", "date2", 
-#               "id3", "name3", "type3", "date3", 
-#               "id4", "name4", "type4", "date4",
-#               "id5", "name5", "type5", "date5",
-#               "id6", "name6", "type6", "date6",
-#               "id7", "name7", "type7", "date7",
-#               "id8", "name8", "type8", "date8",
-#               "id9", "name9", "type9", "date9",
-#               "id10", "name10", "type10", "date10",
-#               "id11", "name11", "type11", "date11")) %>% 
-#   left_join(., group12, by = "address") %>% 
-#   set_names(c("id1", "name1", "address", "type1", "date1", 
-#               "id2", "name2", "type2", "date2", 
-#               "id3", "name3", "type3", "date3", 
-#               "id4", "name4", "type4", "date4",
-#               "id5", "name5", "type5", "date5",
-#               "id6", "name6", "type6", "date6",
-#               "id7", "name7", "type7", "date7",
-#               "id8", "name8", "type8", "date8",
-#               "id9", "name9", "type9", "date9",
-#               "id10", "name10", "type10", "date10",
-#               "id11", "name11", "type11", "date11",
-#               "id12", "name12", "type12", "date12")) %>% 
-#   left_join(., group13, by = "address") %>% 
-#   set_names(c("id1", "name1", "address", "type1", "date1", 
-#               "id2", "name2", "type2", "date2", 
-#               "id3", "name3", "type3", "date3", 
-#               "id4", "name4", "type4", "date4",
-#               "id5", "name5", "type5", "date5",
-#               "id6", "name6", "type6", "date6",
-#               "id7", "name7", "type7", "date7",
-#               "id8", "name8", "type8", "date8",
-#               "id9", "name9", "type9", "date9",
-#               "id10", "name10", "type10", "date10",
-#               "id11", "name11", "type11", "date11",
-#               "id12", "name12", "type12", "date12",
-#               "id13", "name13", "type13", "date13")) %>% 
-#   left_join(., group13, by = "address") %>% 
-#   set_names(c("id1", "name1", "address", "type1", "date1", 
-#               "id2", "name2", "type2", "date2", 
-#               "id3", "name3", "type3", "date3", 
-#               "id4", "name4", "type4", "date4",
-#               "id5", "name5", "type5", "date5",
-#               "id6", "name6", "type6", "date6",
-#               "id7", "name7", "type7", "date7",
-#               "id8", "name8", "type8", "date8",
-#               "id9", "name9", "type9", "date9",
-#               "id10", "name10", "type10", "date10",
-#               "id11", "name11", "type11", "date11",
-#               "id12", "name12", "type12", "date12",
-#               "id13", "name13", "type13", "date13",
-#               "id14", "name14", "type14", "date14")) %>% 
-#   left_join(., group13, by = "address") %>% 
-#   set_names(c("id1", "name1", "address", "type1", "date1", 
-#               "id2", "name2", "type2", "date2", 
-#               "id3", "name3", "type3", "date3", 
-#               "id4", "name4", "type4", "date4",
-#               "id5", "name5", "type5", "date5",
-#               "id6", "name6", "type6", "date6",
-#               "id7", "name7", "type7", "date7",
-#               "id8", "name8", "type8", "date8",
-#               "id9", "name9", "type9", "date9",
-#               "id10", "name10", "type10", "date10",
-#               "id11", "name11", "type11", "date11",
-#               "id12", "name12", "type12", "date12",
-#               "id13", "name13", "type13", "date13",
-#               "id14", "name14", "type14", "date14",
-#               "id15", "name15", "type15", "date15"))
-# 
-# grouped_addresses %>% 
-#   select(type1,type2,type3,type4,type5,type6,type7,type8,type9,type10) %>% View()
 
-unique(food_businesses$type)
+# save output
+save(switches, switches, file = "output/switches.Rdata")
+
+# load output
+load("output/switches.Rdata")
+
 
 non_gentrifying <- c("General grocery", "Institutional", "Industrial")
 
@@ -1284,11 +1154,14 @@ switches_sf <-
   distinct(id.x, .keep_all=TRUE) %>% 
   filter(date.y >=2011) 
 
-#%>% 
-#st_join(DA %>% select(GeoUID), .) %>% 
-#filter(!is.na(id.x)) %>% 
-#group_by(GeoUID, date.y) %>% 
-#summarize(n=n()) 
+unique(food_businesses$type)
+
+# save output
+save(switches_sf, switches_sf, file = "output/switches_sf.Rdata")
+
+# load output
+load("output/switches_sf.Rdata")
+
 
 #Number of switches from non-gentrifying to gentrified per year all one map
 switches_sf %>% 
@@ -1325,12 +1198,11 @@ switches_sf %>%
   theme_void()
 
 
-#Number of switches per year
+#Number of switches per year borough level
 switches_sf %>% 
   st_join(boroughs, .) %>% 
   filter(date.y < 2021) %>% 
-  mutate(dwellings_1000=dwellings/1000) %>% 
-  group_by(borough, date.y, dwellings_1000) %>% 
+  group_by(date.y, dwellings) %>% 
   summarize(n=n()) %>% 
   ggplot()+
   geom_sf(data=province, fill="grey90", color=NA) +
@@ -1344,3 +1216,197 @@ switches_sf %>%
            expand = FALSE)+
   theme_void()
 
+#250 grid-----------------------------------------------------------------------
+
+install.packages("qs")
+library(qs)
+install.packages("future")
+library(future)
+
+grid <- qread("output/grid.qs", nthreads = availableCores())
+
+grid <-
+  grid %>% 
+  st_transform(32618) %>% 
+  select(ID)
+
+#if you select just a column in select in an sf, it will also keep the geometry 
+#unless if you say sf_drop(geometry)
+
+#Number of switches from non-gentrifying to gentrified per year all one map
+
+switches_sf %>% 
+  filter(date.y < 2021) %>% 
+  ggplot()+
+  geom_sf(data=province, fill="grey90", color=NA) +
+  #geom_sf(data=boroughs, fill=NA, color="black")+
+  geom_sf(data=grid, fill=NA, color="grey")+
+  geom_sf(aes(color=date.y), size=1, alpha=0.5)+
+  scale_color_viridis_c(name="Date")+
+  #facet_wrap(~date.y)+
+  #upgo::gg_bbox(boroughs)+
+  coord_sf(xlim = c(582274, 618631), ylim = c(5029928, 5062237),
+           expand = FALSE)+
+  theme_void()+
+  ggtitle("Number of switches from non-gentrifying to gentrified per year")
+
+#Number of switches per year per borough
+
+switches_sf %>% 
+  st_join(boroughs, .) %>% 
+  filter(date.y < 2021) %>% 
+  group_by(borough, date.y, dwellings) %>% 
+  summarize(n=n()) %>% 
+  ggplot()+
+  geom_sf(data=province, fill="grey90", color=NA) +
+  geom_sf(data=grid, fill=NA, color="grey")+ 
+  geom_sf(aes(fill=n), color=NA)+
+  scale_fill_gradientn(name="Number of switches",
+                       colors=col_palette[c(4,1,9)])+
+ facet_wrap(~date.y)+
+  #upgo::gg_bbox(boroughs)+
+  coord_sf(xlim = c(582274, 618631), ylim = c(5029928, 5062237),
+           expand = FALSE)+
+  theme_void()
+
+#Number of switches per year facet_wrap per year
+switches_sf %>% 
+  filter(date.y < 2021) %>% 
+  ggplot()+
+  geom_sf(data=province, fill="grey90", color=NA) +
+  #geom_sf(data=boroughs, fill=NA, color="black")+
+  geom_sf(data=grid, fill=NA, color="grey")+
+  geom_sf(aes(date.y), size=1, alpha=0.5)+
+ # geom_sf(aes(color=date.y), size=1, alpha=0.5)+
+ # scale_color_viridis_c(name="Date")+
+  facet_wrap(~date.y)+
+  #upgo::gg_bbox(boroughs)+
+  coord_sf(xlim = c(582274, 618631), ylim = c(5029928, 5062237),
+           expand = FALSE)+
+  theme_void()+
+  ggtitle("Number of switches from non-gentrifying to gentrified per year")
+
+#Number of switches per year per grid
+
+switches_sf %>% 
+  st_join(grid, .) %>% 
+  filter(date.y < 2021) %>% 
+  group_by(date.y, CSDUID) %>% 
+  summarize(n=n()) %>% 
+  ggplot()+
+  geom_sf(data=province, fill="grey90", color=NA) +
+  #geom_sf(data=grid, fill=NA, color="grey")+ 
+  geom_sf(aes(fill=n), color=NA)+
+  scale_fill_gradientn(name="Number of switches",
+                       colors=col_palette[c(4,1,9)])+
+  facet_wrap(~date.y)+
+  #upgo::gg_bbox(boroughs)+
+  coord_sf(xlim = c(582274, 618631), ylim = c(5029928, 5062237),
+           expand = FALSE)+
+  theme_void()
+
+# Concentration of gentrifying businesses in 2019
+# This code below currently doesn't work
+  # Bring back spatial component to food_businesses_open
+
+food_businesses_open <-
+food_businesses_open %>% 
+left_join(., food_businesses_sf %>% select(id), by = "id") %>% 
+  st_as_sf() 
+  
+food_businesses_open_grid <-
+food_businesses_open %>% 
+  st_join(grid, .) %>% 
+  group_by(CSDUID, type) %>% 
+  filter(!type=="NA") %>% 
+  summarize(n_open=n())
+
+food_businesses_2019 %>% 
+  st_join(grid, .) %>% 
+  filter(type %in% gentrifying) %>% 
+  group_by(CSDUID, type) %>% 
+  summarize(n_open_gentrified_2019=n()) %>% 
+  merge(food_businesses_open_grid) %>% 
+  #st_join(food_businesses_open_grid, by="CSDUID", x=TRUE) %>% 
+  #left_join(., food_businesses_open_grid, by="CSDUID") %>% 
+  group_by(CSDUID) %>% 
+  mutate(percentage=(n_open_gentrified_2019/n_open)*100) %>% 
+  ggplot()+
+  geom_sf(data=province, fill="grey90", color=NA) +
+  geom_sf(data=boroughs, fill=NA, color="black")+
+  geom_sf(aes(fill=percentage), color=NA)+
+  scale_fill_gradientn(name="Percentage of open businesses that are gentrified in 2019",
+                       colors=col_palette[c(4,1,9)])+
+  coord_sf(xlim = c(582274, 618631), ylim = c(5029928, 5062237),
+           expand = FALSE)+
+  theme_void()
+
+#Cloe's code
+
+# Concentration of restaurants, bars, cafes and specialized stores
+
+food_businesses_2019_type <- 
+  food_businesses_2019 %>% 
+  mutate(gentrifying = ifelse(type %in% gentrifying, TRUE, FALSE)) %>% 
+  st_join(grid, .) %>% 
+  group_by(ID, gentrifying) %>% 
+  summarize(number_businesses = n()) %>% 
+  st_drop_geometry()
+
+food_businesses_2019_total <- 
+  food_businesses_2019 %>% 
+  st_join(grid, .) %>% 
+  group_by(ID) %>% 
+  summarize(total = n())  
+
+left_join(food_businesses_2019_type, food_businesses_2019_total, by = "ID") %>% 
+  mutate(percentage=number_businesses/total) %>% 
+  filter(gentrifying == TRUE) %>% 
+  filter(percentage <1) %>% 
+  st_as_sf() %>% 
+  ggplot()+
+  geom_sf(data=province, fill="grey90", color=NA) +
+  geom_sf(aes(fill=percentage), color=NA)+
+ # geom_sf(data=grid, fill=NA, color="grey")+ 
+  scale_fill_gradientn(name="Percentage",
+                       colors=col_palette[c(4,1,9)], 
+                       labels = scales::percent)+
+  coord_sf(xlim = c(582274, 618631), ylim = c(5029928, 5062237),
+           expand = FALSE)+
+  theme_void()+
+  ggtitle("Concentration of restaurants, bars, cafes and specialized stores per total businesses in 2019")
+  
+  
+#Just restaurants
+
+food_businesses_2019_type <- 
+  food_businesses_2019 %>% 
+  filter(type == "Restaurants") %>% 
+  st_join(grid, .) %>% 
+  filter(!is.na(id)) %>% 
+  group_by(ID) %>% 
+  summarize(number_businesses = n()) %>% 
+  st_drop_geometry()
+
+food_businesses_2019_total <- 
+  food_businesses_2019 %>% 
+  st_join(grid, .) %>% 
+  filter(!is.na(id)) %>% 
+  group_by(ID) %>% 
+  summarize(total = n())   
+
+left_join(food_businesses_2019_type, food_businesses_2019_total, by = "ID") %>% 
+  mutate(percentage=number_businesses/total) %>% 
+  filter(percentage <1) %>% 
+  st_as_sf() %>% 
+  #filter(gentrifying == TRUE) %>% 
+  ggplot()+
+  geom_sf(data=province, fill="grey90", color=NA) +
+  geom_sf(aes(fill=percentage), color=NA)+
+  scale_fill_gradientn(name="Percentage",
+                       colors=col_palette[c(4,1,9)], 
+                       labels = scales::percent)+
+  coord_sf(xlim = c(582274, 618631), ylim = c(5029928, 5062237),
+           expand = FALSE)+
+  theme_void()+
+  ggtitle("Concentration of restaurants per total businesses in 2019")
