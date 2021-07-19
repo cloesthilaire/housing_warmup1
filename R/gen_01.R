@@ -3,9 +3,12 @@ library(ggpubr)
 # 2001, 2006, 2016
 # trend in neighbourhood change/ story and key pattern
 
-view(cancensus::list_census_vectors("CA06"))
-View(cancensus::list_census_regions("CA1996"))
+view(cancensus::list_census_vectors("CA16"))
+View(cancensus::list_census_regions("CA01"))
 View(cancensus::list_census_vectors("CA1996"))
+
+plot(DA_01_test)
+plot(DA_06_test)
 
 # get data for 2001
 View(cancensus::list_census_vectors("CA01"))
@@ -49,6 +52,7 @@ DA_01_test <-
   rename(ID = GeoUID)
 
 glimpse(DA_01_test)
+
 # data for 1996
 view(DA_96_test)
 DA_96_test <-
@@ -70,7 +74,8 @@ DA_96_test <-
               "mobility_one_year", "mobility_one_year_total", "mobility_five_years", "mobility_five_years_total",
               "bachelor_above", "aboriginal_total", "aboriginal", "education_total",
               "geometry" )) %>%
-  mutate(low_income_prop = low_income / low_income_total
+  mutate(low_income_prop = low_income / low_income_total,
+         renter_total = renter
          # p_renter = renter / parent_tenure, 
          # p_repairs = major_repairs / parent_repairs,
          # p_thirty_renter = thirty_renter / parent_thirty,
@@ -84,18 +89,32 @@ DA_96_test <-
   #select(-c(low_income_AT_prop)) %>% 
   as_tibble() %>% 
   st_as_sf(agr = "constant")
-
+ 
+# 1996 in CT to check NAs
 CT_96_test <-
-  view(get_census(
-    dataset = "CA1996", regions = list(CSD = c("2466025")), level = "CT",
+  get_census(
+    dataset = "CA1996", regions = list(CSD = c("2466025")), level = "DA",
     vectors = c("v_CA1996_1678", "v_CA1996_1683", "v_CA1996_1678","v_CA1996_1687",
                 "v_CA1996_1614","v_CA1996_1627","v_CA1996_1701","v_CA1996_1702",
                 "v_CA1996_1682", "v_CA1996_1681", "v_CA1996_784", "v_CA1996_783", "v_CA1996_128","v_CA1996_125",
                 "v_CA1996_1387","v_CA1996_1385","v_CA1996_1396","v_CA1996_1394",
                 "v_CA1996_1611","v_CA1996_1610","v_CA1996_472","v_CA1996_473",
                 "v_CA1996_1356","v_CA1996_1347"),
+    geo_format = "sf")
+
+# test if nonmover+mover = total in 1996
+test_2 <-
+  view(get_census(
+    dataset = "CA1996", regions = list(CSD = c("2466025")), level = "DA",
+    vectors = c("v_CA1996_1395","v_CA1996_1396","v_CA1996_1394"),
     geo_format = "sf"))
-view(CT_96_test)
+
+test_2 <- test_2 %>% 
+  rename(nonmover = "v_CA1996_1395: Non-movers",
+         mover = "v_CA1996_1396: Movers")%>%
+  mutate(sum_mobility = nonmover + mover)
+
+sum(DA_96_test$population)
 
 # boundary change
 # correlation test --------------------------------------------------------
@@ -114,9 +133,9 @@ shapiro.test(DA$p_immigrants)
 ggqqplot(var_DA_06_16$p_renter, ylab = "percentage of renter")
 ggqqplot(DA$p_immigrants, ylab = "percentage of immigrants")
 
-# Inflation adjustment ----------------------------------------------------
+# Inflation adjustment 06 to 16 ----------------------------------------------------
 
-var_DA_06_16 <- 
+var_DA_06_16_2 <- 
 var_DA_06_16 %>%
   mutate(var_avg_rent_adjusted = 
            (average_rent - (gross_rent_avg_06*1.1741)) / (gross_rent_avg_06*1.1741),
@@ -124,8 +143,6 @@ var_DA_06_16 %>%
            (average_value_dwellings - (value_dwellings_avg_06*1.1741)) / (value_dwellings_avg_06*1.1741),
          var_avg_median_HH_income_AT_adjusted = 
            (median_HH_income_AT-(HH_income_AT_median_06*1.1741)) / (HH_income_AT_median_06*1.1741))
-
-glimpse(var_DA_06_16)
 
 
 # make graphs -------------------------------------------------------------
@@ -422,5 +439,99 @@ renter_proprenter_map
 
 ggsave("output/figures/renter_proprenter_map.pdf", plot = renter_proprenter_map, width = 8, 
        height = 5, units = "in", useDingbats = FALSE)
+
+
+
+
+
+
+
+# GI --------------------------------------------------------------
+# metric 1
+# gentrifiable criteria:
+# 1. median_hh_income< CMA
+# 2. bacholar_above< CMA
+# (3. New housing construction proportion*< CMA)
+
+# var_DA_06_16 is CSD
+var_DA_06_16_2 <- 
+  var_DA_06_16_2 %>% 
+  mutate(var_avg_rent_adjusted = 
+           (average_rent - (gross_rent_avg_06*1.1741)) / (gross_rent_avg_06*1.1741),
+         var_avg_value_dwelling_adjusted = 
+           (average_value_dwellings - (value_dwellings_avg_06*1.1741)) / (value_dwellings_avg_06*1.1741),
+         var_avg_median_HH_income_AT_adjusted = 
+           (median_HH_income_AT-(HH_income_AT_median_06*1.1741)) / (HH_income_AT_median_06*1.1741)) %>% 
+  mutate(p_bachelor_above_06_csd = wtd.quantile(p_bachelor_above_06, probs = c(.5), na.rm = TRUE),
+         HH_income_AT_median_06_csd = wtd.quantile(HH_income_AT_median_06, probs = c(.5), na.rm = TRUE)) %>% 
+  mutate(gentrifiable = ifelse(p_bachelor_above_06 < p_bachelor_above_06_csd & 
+                              HH_income_AT_median_06 < HH_income_AT_median_06_csd, TRUE, FALSE))
+    
+gentrifiable_06_map <- var_DA_06_16_2 %>% 
+  ggplot()+
+  geom_sf(aes(fill = gentrifiable), colour = NA)+
+  scale_fill_manual(name = "Gentriable in 2006",
+                    values = col_palette[c(5, 1)], na.value = "grey60")+
+  theme_void()
+
+ggsave("output/figures/gentrifiable_06_map.pdf", plot = gentrifiable_06_map, width = 8, 
+       height = 5, units = "in", useDingbats = FALSE)
+
+#another colour palette
+#pal <- scales::hue_pal()(9)
+#scales::show_col(scales::hue_pal()(4))
+
+#var_DA_06_16_2 %>% 
+#  ggplot()+
+#  geom_sf(aes(fill = gentrifiable), colour = NA)+
+#  scale_fill_manual(values = pal[c(7, 1)], na.value = "grey80")+
+# theme_void()
+
+
+# Gentrified:
+# Demographic change
+# 1.The increase proportion of people with bachelor degree > CMA
+# 2.The increase proportion of housing ownership > CMA (--> renter decline??)
+# 3.The increase Median household  income > CMA 
+# 4.The increase of professional occupation > CMA 
+# Reinvestment
+#The increase of Housing value > CMA
+#The increase of Monthly rent  > CMA
+
+var_DA_06_16_2 <- 
+var_DA_06_16_2 %>% 
+  mutate(var_bacholar_above = p_bachelor_above - p_bachelor_above_06,
+         var_bachelor_above_median = wtd.quantile(var_bacholar_above, probs = c(.5), na.rm = TRUE),
+         var_prop_renter_median = wtd.quantile(var_prop_renter, probs = c(.5), na.rm = TRUE),
+         var_median_hh_income_median = wtd.quantile(var_avg_median_HH_income_AT_adjusted, probs = c(.5), na.rm = TRUE),
+         # var_profession_median 
+         var_avg_value_dwelling_median = wtd.quantile(var_avg_value_dwelling_adjusted, probs = c(.5), na.rm = TRUE),
+         var_avg_rent_median = wtd.quantile(var_avg_rent_adjusted, probs = c(.5), na.rm = TRUE)
+         )%>% 
+  mutate(gentrified = ifelse(#gentrifiable & 
+                               var_bacholar_above > var_bachelor_above_median &
+                               var_prop_renter < var_prop_renter_median &
+                               var_avg_median_HH_income_AT_adjusted > var_median_hh_income_median &
+                               var_avg_value_dwelling_adjusted > var_avg_value_dwelling_median &
+                               var_avg_rent_adjusted > var_avg_rent_median, TRUE, FALSE))
+
+gentrified_06_16_map <- 
+  var_DA_06_16_2 %>% 
+  ggplot()+
+  geom_sf(aes(fill = gentrified), colour = NA)+
+  scale_fill_manual(name = "Gentried through\n2006 to 2016",
+                    values = col_palette[c(5, 1)], na.value = "grey60")+
+  theme_void()
+
+
+#indicators:
+# Changes in percentage of people with bachelor degrees
+# Changes in professional occupation
+# Changes in median household  income
+# Changes in Housing value 
+# Changes in Monthly rent
+# Changes in proportion of housing ownership 
+
+
 
 
