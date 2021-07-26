@@ -1,16 +1,20 @@
+
+library(tidyverse)
+library(sf)
+library(stringr)
+library(tidyr)
+library(qs)
+library(cancensus)
 library(ggpubr)
+
+#bivariate map
+library(scales)
+library(biscale)
+library(patchwork)
+
 # neighbourhood change
-# 2001, 2006, 2016
-# trend in neighbourhood change/ story and key pattern
 
-view(cancensus::list_census_vectors("CA16"))
-View(cancensus::list_census_regions("CA01"))
-View(cancensus::list_census_vectors("CA1996"))
-
-plot(DA_01_test)
-plot(DA_06_test)
-
-# get data for 2001
+# get census data -----
 View(cancensus::list_census_vectors("CA01"))
 
 DA_01_test <-
@@ -50,8 +54,6 @@ DA_01_test <-
 DA_01_test <- 
   DA_01_test %>% 
   rename(ID = GeoUID)
-
-glimpse(DA_01_test)
 
 # data for 1996
 view(DA_96_test)
@@ -116,22 +118,17 @@ test_2 <- test_2 %>%
 
 sum(DA_96_test$population)
 
-# boundary change
 # correlation test --------------------------------------------------------
-head(DA,6)
-ggscatter(var_DA_06_16, x = "var_dwellings", y = "var_population", 
-          add = "reg.line", conf.int = FALSE,
-          cor.coef = TRUE,cor.method = "spearman",
-          xlab = "dwelling change", ylab = "population change")
+ggqqplot(var_DA_06_16$p_vm, ylab = "percentage of vm")
+ggqqplot(var_DA_06_16$p_immigrants, ylab = "percentage of immigrants")
 
-ggscatter(DA_01_test, x = "renter", y = "renter_total", 
+ggscatter(var_DA_06_16, x = "p_vm", y = "p_immigrants", 
           add = "reg.line", conf.int = FALSE,
           cor.coef = TRUE,cor.method = "pearson",
-          xlab = "renter", ylab = "renter_total")
+          xlab = "p_vm", ylab = "p_immigrants")
 
-shapiro.test(DA$p_immigrants)
-ggqqplot(var_DA_06_16$p_renter, ylab = "percentage of renter")
-ggqqplot(DA$p_immigrants, ylab = "percentage of immigrants")
+shapiro.test(var_DA_06_16$p_vm)
+
 
 # Inflation adjustment 06 to 16 ----------------------------------------------------
 
@@ -145,313 +142,19 @@ var_DA_06_16 %>%
            (median_HH_income_AT-(HH_income_AT_median_06*1.1741)) / (HH_income_AT_median_06*1.1741))
 
 
-# make graphs -------------------------------------------------------------
-
-# map for tenant change
-# change0616_tenant_map <- 
-#DA %>% 
-  #ggplot()+
-  #geom_sf(data = province, fill="grey90", color=NA)+
-  #geom_sf(mapping = aes(fill=p_renter), color=NA) +
-  #scale_fill_gradientn(name="Percentage of renter change",
-  #                   colors=col_palette[c(4,1,9)],
-  #                    labels = scales::percent) +
-  #coord_sf(xlim = c(581000, 621000), ylim = c(5027500, 5065000),
-  #        expand = FALSE) +
-  #ggtitle("Tenant change from 2006 to 2016")+
-  #theme_void()
-
-#map: dwellings change/ 06-16/ DA
-dwellingschange_06_16 <- 
-  var_DA_06_16 %>% 
-  ggplot()+
-  geom_sf(mapping = aes(fill=var_dwellings), color=NA)+
-  scale_fill_gradient2(name="Percentage of dwellings change",
-                       low = col_palette[3],
-                       mid = "white",
-                       high = col_palette[1],
-                       midpoint = 0,
-                       label = scales::percent,
-                       #oob = scales::squish,
-                       limits = c(-0.5, 0.5))+
-  theme_void()
-
-ggsave("output/figures/dwellingschange_06_16_ns.pdf", plot = dwellingschange_06_16_ns, width = 8, 
-       height = 4.2, units = "in", useDingbats = FALSE)
-
-#map: population change/ 06-16/ DA
-popchange_06_16_ns <- 
-  var_DA_06_16 %>% 
-  ggplot()+
-  geom_sf(mapping = aes(fill=var_population), color=NA)+
-  scale_fill_gradient2(name="Percentage of population change",
-                       low = col_palette[3],
-                       mid = "white",
-                       high = col_palette[1],
-                       midpoint = 0,
-                       label = scales::percent,
-                       #oob = scales::squish,
-                       limits = c(-0.5, 0.5))+
-  theme_void()
-
-ggsave("output/figures/popchange_06_16_ns.pdf", plot = popchange_06_16_ns, width = 8, 
-       height = 4.2, units = "in", useDingbats = FALSE)
-
-#map: renter change/ 06-16/ DA
-renterchange_06_16_ns <-
-  var_DA_06_16 %>% 
-  ggplot()+
-  geom_sf(mapping = aes(fill=var_renter), color=NA)+
-  scale_fill_gradient2(name="Percentage of renter change",
-                       low = col_palette[3],
-                       mid = "white",
-                       high = col_palette[1],
-                       midpoint = 0,
-                       label = scales::percent,
-                       #oob = scales::squish,
-                       limits = c(-0.5, 0.5))+
-  theme_void()
-
-ggsave("output/figures/renterchange_06_16_ns.pdf", plot = renterchange_06_16_ns, width = 8, 
-       height = 4.2, units = "in", useDingbats = FALSE)
-
-# map: proportion of renter
-renterpropchange_06_16_ns <-
-  var_DA_06_16 %>% 
-  ggplot()+
-  geom_sf(mapping = aes(fill=var_prop_renter), color=NA)+
-  scale_fill_gradient2(name="Percentage of renter proportion change",
-                       low = col_palette[3],
-                       mid = "white",
-                       high = col_palette[1],
-                       midpoint = 0,
-                       label = scales::percent,
-                       #oob = scales::squish,
-                       limits = c(-0.5, 0.5))+
-  theme_void()
-
-ggsave("output/figures/renterpropchange_06_16_ns.pdf", plot = renterpropchange_06_16_ns, width = 8, 
-       height = 4.2, units = "in", useDingbats = FALSE)
-
-# map: hh income change adjusted/ 06-16/ DA
-medianhhincomechange_ad_06_16_ns <-var_DA_06_16 %>% 
-  ggplot()+
-  geom_sf(mapping = aes(fill=var_avg_median_HH_income_AT_adjusted), color=NA)+
-  scale_fill_gradient2(name="Percentage of household income change",
-                       low = col_palette[3],
-                       mid = "white",
-                       high = col_palette[1],
-                       midpoint = 0,
-                       label = scales::percent,
-                       oob = scales::squish,
-                       limits = c(-0.5, 0.5))+
-  theme_void()
-
-ggsave("output/figures/medianhhincomechange_ad_06_16_ns.pdf", plot = medianhhincomechange_ad_06_16_ns, width = 8, 
-       height = 4.2, units = "in", useDingbats = FALSE)
-
-
-# low income proportion
-# weird!
-propLIMAT_06_16_ns <- var_DA_06_16 %>% 
-  ggplot()+
-  geom_sf(mapping = aes(fill=var_prop_LIMAT), color=NA)+
-  scale_fill_gradient2(name="Percentage of low income proportion change",
-                       low = col_palette[3],
-                       mid = "white",
-                       high = col_palette[1],
-                       midpoint = 0,
-                       label = scales::percent,
-                       #oob = scales::squish,
-                       limits = c(-0.5, 0.5))+
-  theme_void()
-
-ggsave("output/figures/mpropLIMAT_06_16_ns.pdf", plot = propLIMAT_06_16_ns, width = 8, 
-       height = 4.2, units = "in", useDingbats = FALSE)
-
-
-# dwelling value adjusted
-dewelling_value_06_16_ns <- var_DA_06_16 %>% 
-  ggplot()+
-  geom_sf(mapping = aes(fill=var_avg_value_dwelling_adjusted), color=NA)+
-  scale_fill_gradient2(name="Percentage of average dwelling value change",
-                       low = col_palette[3],
-                       mid = "white",
-                       high = col_palette[1],
-                       midpoint = 0,
-                       label = scales::percent,
-                       #oob = scales::squish,
-                       limits = c(-0.5, 0.5))+
-  theme_void()
-
-ggsave("output/figures/dewelling_value_06_16_ns.pdf", plot = dewelling_value_06_16_ns, width = 8, 
-       height = 4.2, units = "in", useDingbats = FALSE)
-
-# rent adjusted
-rent_06_16_ns <- var_DA_06_16 %>% 
-  ggplot()+
-  geom_sf(mapping = aes(fill=var_avg_rent_adjusted), color=NA)+
-  scale_fill_gradient2(name="Percentage of rent change",
-                       low = col_palette[3],
-                       mid = "white",
-                       high = col_palette[1],
-                       midpoint = 0,
-                       label = scales::percent,
-                       #oob = scales::squish,
-                       limits = c(-0.5, 0.5))+
-  theme_void()
-
-ggsave("output/figures/rent_06_16_ns.pdf", plot = rent_06_16_ns, width = 8, 
-       height = 4.2, units = "in", useDingbats = FALSE)
-
-# renter spending 30% or more income on housing
-prop_30renter_06_16 <- var_DA_06_16 %>% 
-  ggplot()+
-  geom_sf(mapping = aes(fill=var_prop_thirty_renter), color=NA)+
-  scale_fill_gradient2(name="Percentage of renter spending 30%\nor more income on housing proportion change",
-                       low = col_palette[3],
-                       mid = "white",
-                       high = col_palette[1],
-                       midpoint = 0,
-                       label = scales::percent,
-                       oob = scales::squish,
-                       limits = c(-0.5, 0.5))+
-  theme_void()
-
-ggsave("output/figures/prop_30renter_06_16.pdf", plot = prop_30renter_06_16, width = 8, 
-       height = 4.2, units = "in", useDingbats = FALSE)
-
-
-# repairs proportion
-proprepairs_06_16 <- var_DA_06_16 %>% 
-  ggplot()+
-  geom_sf(mapping = aes(fill=var_prop_repairs), color=NA)+
-  scale_fill_gradient2(name="Percentage of housing need repairs proportion change",
-                       low = col_palette[3],
-                       mid = "white",
-                       high = col_palette[1],
-                       midpoint = 0,
-                       label = scales::percent,
-                       oob = scales::squish,
-                       limits = c(-0.5, 0.5))+
-  theme_void()
-
-ggsave("output/figures/proprepairs_06_16.pdf", plot = proprepairs_06_16, width = 8, 
-       height = 4.2, units = "in", useDingbats = FALSE)
-
-# prop one year mobility
-prop_oneyear_06_16_ns <- var_DA_06_16 %>% 
-  ggplot()+
-  geom_sf(mapping = aes(fill=var_prop_mobility_one_year), color=NA)+
-  scale_fill_gradient2(name="Percentage of mobility in one year proportion change",
-                       low = col_palette[3],
-                       mid = "white",
-                       high = col_palette[1],
-                       midpoint = 0,
-                       label = scales::percent,
-                       #oob = scales::squish,
-                       limits = c(-0.5, 0.5))+
-  theme_void()
-
-ggsave("output/figures/prop_oneyear_06_16_ns.pdf", plot = prop_oneyear_06_16_ns, width = 8, 
-       height = 4.2, units = "in", useDingbats = FALSE)
-
-# prop five year mobility
-prop_fiveyears_06_16 <- var_DA_06_16 %>% 
-  ggplot()+
-  geom_sf(mapping = aes(fill=var_prop_mobility_five_years), color=NA)+
-  scale_fill_gradient2(name="Percentage of mobility in five years proportion change",
-                       low = col_palette[3],
-                       mid = "white",
-                       high = col_palette[1],
-                       midpoint = 0,
-                       label = scales::percent,
-                       oob = scales::squish,
-                       limits = c(-0.5, 0.5))+
-  theme_void()
-
-ggsave("output/figures/prop_fiveyears_06_16.pdf", plot = prop_fiveyears_06_16, width = 8, 
-       height = 4.2, units = "in", useDingbats = FALSE)
-
-# prop of visible minority
-prop_vm_06_16_ns <- var_DA_06_16 %>% 
-  ggplot()+
-  geom_sf(mapping = aes(fill=var_prop_vm), color=NA)+
-  scale_fill_gradient2(name="Percentage of visible minority proportion change",
-                       low = col_palette[3],
-                       mid = "white",
-                       high = col_palette[1],
-                       midpoint = 0,
-                       label = scales::percent,
-                       #oob = scales::squish,
-                       limits = c(-0.5, 0.5))+
-  theme_void()
-
-ggsave("output/figures/prop_vm_06_16_ns.pdf", plot = prop_vm_06_16_ns, width = 8, 
-       height = 4.2, units = "in", useDingbats = FALSE)
-
-# Save data
-
-
-
-# bivariate map--
-# palette
-bivar <- bi_pal_manual(val_1_1 = "#e8e8e8",
-                       val_1_2 = "#b8d6be",
-                       val_2_1 = "#b5c0da", 
-                       val_2_2 = "#90b2b3", 
-                       val_3_1 = "#6c83b5",  
-                       val_3_2 = "#567994", 
-                       val_1_3 = "#73ae80", 
-                       val_2_3 = "#5a9178",
-                       val_3_3 = "#2a5a5b", preview=FALSE)
-
-show_col(bivar)
-
-# Prepare the dataset to display in a bivariate choropleth map
-
-renter_proprenter <-
-  bi_class(na.omit(var_DA_06_16), x = var_renter, y = var_prop_renter, style = "quantile", dim = 3) #na.omit() is useful when analyses require you to have a dataset free of NA values!
-
-# Plot for the bivariate choropleth map
-
-plot <- 
-  ggplot() +
-  geom_sf(data = renter_proprenter, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
-  bi_scale_fill(pal = bivar, dim = 3) +
-  bi_theme()+
-  theme(legend.position = "bottom")
-
-plot #to see your plot
-
-# Add bivariate legend
-bi_legend <- bi_legend(pal = bivar,
-                       dim = 3,
-                       xlab = "Renter change",
-                       ylab = "Renter proportion change",
-                       size = 8)
-
-renter_proprenter_map <- plot + inset_element(bi_legend, left = 0, bottom = 0.6, right = 0.4, top = 1)
-
-renter_proprenter_map
-
-# Save in PDF in your output/figures folder to see the true sizes of your plot, ajust accordingly
-
-ggsave("output/figures/renter_proprenter_map.pdf", plot = renter_proprenter_map, width = 8, 
-       height = 5, units = "in", useDingbats = FALSE)
-
-
-
-
 
 
 
 # GI --------------------------------------------------------------
-# metric 1
-# gentrifiable criteria:
+# metric 1: binary map ----
+# step 1: gentrifiable criteria:
 # 1. median_hh_income< CMA
 # 2. bacholar_above< CMA
 # (3. New housing construction proportion*< CMA)
+
+Hmisc::wtd.quantile(var_DA_06_16$median_HH_income_AT, probs = c(.5), na.rm = TRUE)+ 
+  sd(var_DA_06_16$median_HH_income_AT, na.rm = TRUE)
+mean(var_DA_06_16$median_HH_income_AT, na.rm = TRUE)
 
 # var_DA_06_16 is CSD
 var_DA_06_16_2 <- 
@@ -466,72 +169,252 @@ var_DA_06_16_2 <-
          HH_income_AT_median_06_csd = wtd.quantile(HH_income_AT_median_06, probs = c(.5), na.rm = TRUE)) %>% 
   mutate(gentrifiable = ifelse(p_bachelor_above_06 < p_bachelor_above_06_csd & 
                               HH_income_AT_median_06 < HH_income_AT_median_06_csd, TRUE, FALSE))
-    
-gentrifiable_06_map <- var_DA_06_16_2 %>% 
-  ggplot()+
-  geom_sf(aes(fill = gentrifiable), colour = NA)+
-  scale_fill_manual(name = "Gentriable in 2006",
-                    values = col_palette[c(5, 1)], na.value = "grey60")+
-  theme_void()
 
-ggsave("output/figures/gentrifiable_06_map.pdf", plot = gentrifiable_06_map, width = 8, 
-       height = 5, units = "in", useDingbats = FALSE)
-
-#another colour palette
-#pal <- scales::hue_pal()(9)
-#scales::show_col(scales::hue_pal()(4))
-
-#var_DA_06_16_2 %>% 
-#  ggplot()+
-#  geom_sf(aes(fill = gentrifiable), colour = NA)+
-#  scale_fill_manual(values = pal[c(7, 1)], na.value = "grey80")+
-# theme_void()
-
-
-# Gentrified:
+# step2: Gentrified criteria:
 # Demographic change
 # 1.The increase proportion of people with bachelor degree > CMA
 # 2.The increase proportion of housing ownership > CMA (--> renter decline??)
 # 3.The increase Median household  income > CMA 
 # 4.The increase of professional occupation > CMA 
 # Reinvestment
-#The increase of Housing value > CMA
-#The increase of Monthly rent  > CMA
+#1. The increase of Housing value > CMA
+#2. The increase of Monthly rent  > CMA
 
 var_DA_06_16_2 <- 
 var_DA_06_16_2 %>% 
   mutate(var_bacholar_above = p_bachelor_above - p_bachelor_above_06,
          var_bachelor_above_median = wtd.quantile(var_bacholar_above, probs = c(.5), na.rm = TRUE),
+         # should change to ownership in new dataset
          var_prop_renter_median = wtd.quantile(var_prop_renter, probs = c(.5), na.rm = TRUE),
          var_median_hh_income_median = wtd.quantile(var_avg_median_HH_income_AT_adjusted, probs = c(.5), na.rm = TRUE),
-         # var_profession_median 
+         # var_profession_median = wtd.quantile(var_profession, probs = c(.5), na.rm = TRUE),
          var_avg_value_dwelling_median = wtd.quantile(var_avg_value_dwelling_adjusted, probs = c(.5), na.rm = TRUE),
-         var_avg_rent_median = wtd.quantile(var_avg_rent_adjusted, probs = c(.5), na.rm = TRUE)
+         var_avg_rent_median = wtd.quantile(var_avg_rent_adjusted, probs = c(.5), na.rm = TRUE),
+         var_prop_vm_median = wtd.quantile(var_prop_vm, probs = c(.5), na.rm = TRUE)
          )%>% 
-  mutate(gentrified = ifelse(#gentrifiable & 
+  mutate(gentrified = ifelse(gentrifiable & 
                                var_bacholar_above > var_bachelor_above_median &
                                var_prop_renter < var_prop_renter_median &
                                var_avg_median_HH_income_AT_adjusted > var_median_hh_income_median &
                                var_avg_value_dwelling_adjusted > var_avg_value_dwelling_median &
                                var_avg_rent_adjusted > var_avg_rent_median, TRUE, FALSE))
 
+# create graphs  
+gentrifiable_06_map <- 
+  var_DA_06_16_2 %>% 
+  ggplot()+
+  geom_sf(aes(fill = gentrifiable), colour = NA)+
+  scale_fill_manual(name = "Gentriable in 2006",
+                    values = col_palette[c(5, 1)], na.value = "grey60")+
+  theme_void()
+
 gentrified_06_16_map <- 
   var_DA_06_16_2 %>% 
   ggplot()+
   geom_sf(aes(fill = gentrified), colour = NA)+
+  #geom_sf(data = boroughs, fill = NA, colour = "grey20", lwd= 0.5)+
   scale_fill_manual(name = "Gentried through\n2006 to 2016",
                     values = col_palette[c(5, 1)], na.value = "grey60")+
   theme_void()
 
 
-#indicators:
+
+# metric 2: : quartile score ---- 
+#indicators qualified in the process of gentrification:
 # Changes in percentage of people with bachelor degrees
-# Changes in professional occupation
+# Changes in professional occupation  *
 # Changes in median household  income
 # Changes in Housing value 
 # Changes in Monthly rent
-# Changes in proportion of housing ownership 
+# Changes in proportion of housing ownership
+
+# <25%--1
+# 25-50%--2
+# 50--75%--3
+# >75%--4
+
+var_list <- c("var_bacholar_above", "var_avg_median_HH_income_AT_adjusted", "var_avg_value_dwelling_adjusted","var_avg_rent_adjusted", 
+              "var_prop_renter", "var_prop_vm") 
+
+gentrif_q <- 
+var_DA_06_16_test %>% 
+  mutate(across(all_of(var_list), ntile, 4, .names = "{.col}_q4"))
+
+q_list <- str_subset(names(gentrif_q), "_q4")
+
+#gentrif_q %>% 
+#    mutate(across(all_of(q_list), ~(./4)))
+
+v2 <- gentrif_q %>% 
+  mutate (sum_variable_qq = (var_bacholar_above_q4 + var_avg_median_HH_income_AT_adjusted_q4+
+                              var_avg_value_dwelling_adjusted_q4 + var_avg_rent_adjusted_q4-
+                              var_prop_renter_q4 - var_prop_vm_q4)) %>% 
+  mutate(sum_variable_qq2 = scales::rescale(v2$sum_variable_qq, to= c(0, 1)))  #%>%
+  #group_by(sum_variable_qq2) %>% 
+  #dplyr::summarize(n()) 
 
 
 
+# metric: Z-score draft---------------------------------------------------------
+v2_test <- 
+  v2 %>% 
+  mutate(across(where(is.numeric), ~replace(., is.infinite(.), NA))) #replace Inf by NAs
 
+v2_test <- na.omit(v2_test) #for taking out the NAs
+# 295 removed
+
+var_z <- 
+  v2_test %>% 
+  select(var_bacholar_above, var_avg_median_HH_income_AT_adjusted, 
+         var_avg_value_dwelling_adjusted,var_avg_rent_adjusted, 
+         var_prop_renter, var_prop_vm) %>%
+  rename_with(~paste0(.,"_z"), -geometry) %>% 
+  st_drop_geometry()
+
+var_zscore <-scale(var_z)
+GI_06_16 <- cbind(v2_test,var_zscore)
+
+GI_06_16 <- 
+  GI_06_16 %>% 
+  mutate(sum_z = var_bacholar_above_z + var_avg_median_HH_income_AT_adjusted_z + var_avg_value_dwelling_adjusted_z
+         +var_avg_rent_adjusted_z -var_prop_renter_z -var_prop_vm_z) 
+
+v2_z_map <-
+  GI_06_16 %>% 
+  ggplot()+
+  geom_sf(aes(fill = sum_z), colour = NA)+
+  geom_sf(data = boroughs, fill = NA, colour = "grey20", lwd= 0.3)+
+  scale_fill_viridis_c( name="Neighbourhood Change\n2006 to 2016",
+                        limits = c(-2.5, 2.5), 
+                        oob = scales::squish)+
+  #scale_fill_gradientn(name="Neighbourhood Change\n2006 to 2016",
+  #                    #n.breaks = 3,
+  #                    #breaks = c(0.3, 0.6, 0.9),
+  #                    colours=col_palette[c(9,1,4)],
+  #                     limits = c(0, 1),
+  #                     oob = scales::squish)+
+  theme_void()
+  
+
+# cleaned metric: Z-score ---------------------------------------------------------
+
+# mutate var_ columns
+# DA level/ 06-16 as example
+
+process_change_data <- function (variable, x, y){
+DA %>% 
+mutate(variable = variable_x - variable_y/ variable_y)}
+
+
+DA %>% 
+  mutate(var_bacholar_above_prop = bacholar_above_prop_16 - bacholar_above_prop_06/ bacholar_above_prop_06,
+         var_inc_median_dollar_adjusted_prop = inc_median_dollar_adjusted_16- inc_median_dollar_adjusted_06/ inc_median_dollar_adjusted_06,
+         var_housing_value_avg_adjusted_prop = housing_value_avg_adjusted_16- housing_value_avg_adjusted_06/ housing_value_avg_adjusted_06,
+         var_housing_rent_avg_adjusted_prop = housing_rent_avg_adjusted_16- housing_rent_avg_adjusted_06/ housing_rent_avg_adjusted_06,
+         var_housing_tenant_prop = housing_tenant_prop_16- housing_tenant_prop_06/ housing_tenant_prop_06,
+         var_imm_vm_prop = imm_vm_prop_16- imm_vm_prop_06/ imm_vm_prop_06)
+# "var_xxx"--> prefix of percentage of change from last census year
+# "_adjusted_" --> use inflation-adjusted dollar
+
+
+# deal with NA and Inf
+DA_test <- 
+  DA %>% 
+  mutate(across(where(is.numeric), ~replace(., is.infinite(.), NA))) #replace Inf by NAs
+DA_test <- na.omit(DA_test) #for taking out the NAs
+
+# make list for indicators to make z-score
+var_z <- 
+  DA_test %>% 
+  select(var_bacholar_above_prop, var_inc_median_dollar_adjusted_prop, 
+         var_housing_value_avg_adjusted_prop,var_housing_rent_avg_adjusted_prop, 
+         var_housing_tenant_prop, var_imm_vm_prop) %>%    #these two are negative corelation
+  rename_with(~paste0(.,"_z"), -geometry) %>% 
+  st_drop_geometry()
+
+var_z <-scale(var_z)
+DA_test <- cbind(DA_test, var_z)
+
+DA_test <- 
+  DA_test %>% 
+  mutate(sum_z = var_bacholar_above_z + var_avg_median_HH_income_AT_adjusted_z + var_avg_value_dwelling_adjusted_z
+         +var_avg_rent_adjusted_z -var_prop_renter_z -var_prop_vm_z) 
+
+rm(var_z)
+
+# create graphs
+GI_map <-
+  DA_test %>% 
+  ggplot()+
+  geom_sf(aes(fill = sum_z), colour = NA)+
+  geom_sf(data = boroughs, fill = NA, colour = "grey20", lwd= 0.3)+
+  scale_fill_viridis_c( name="Neighbourhood Change\n2006 to 2016",
+                        limits = c(-2.5, 2.5),  #need to try if this limits works throughout years
+                        oob = scales::squish)+
+  theme_void()
+
+
+#### Raster, Contour map----
+GI_06_16 %>% 
+  extract(geometry, c('lat', 'lon'), '\\((.*), (.*)\\)', convert = TRUE) %>% 
+  select(lat, lon) %>% 
+  as_tibble()
+
+GI_06_16 %>% 
+  ggplot()+
+  geom_sf(aes(x = longitude, y = latitude))+
+  geom_raster(aes(fill = sum_z))+
+  scale_fill_gradientn(name="Gentrification",
+                       colours=col_palette[c(4, 1, 2, 9)] #,
+                       #limits = c(10, 200),
+                       #oob = scales::squish
+                       )
+  #scale_fill_gradientn(name="Neighbourhood Change\n2006 to 2016",
+  #                    #n.breaks = 3,
+  #                    #breaks = c(0.3, 0.6, 0.9),
+  #                    colours=col_palette[c(9,1,4)],
+  #                     limits = c(0, 1),
+  #                     oob = scales::squish)+
+  #theme_void()
+  
+# other analysis ----
+GI_06_16 %>% 
+  ggplot(aes(x = sum_variable_qq, y = p_thirty_renter))+
+  geom_jitter(aes())+
+  ylim(c(0, 1))
+
+GI_06_16 %>% 
+  ggplot(aes(x = sum_z))+
+  geom_histogram()+
+  xlim(c(-4,4))
+
+#comparing 
+#bi_compare <- function(v2, variable){}
+bi <-
+   bi_class(na.omit(v2), x = sum_variable_qq, y = p_repairs, style = "quantile", dim = 3) 
+
+plot <- 
+   ggplot() +
+   geom_sf(data = bi, mapping = aes(fill = bi_class), color = NA, size = 0.1, show.legend = FALSE) +
+   bi_scale_fill(pal = bivar, dim = 3) +
+   bi_theme()+
+   theme(legend.position = "bottom")
+
+bi_legend <- bi_legend(pal = bivar,
+                       dim = 3,
+                       xlab = "GI",
+                       ylab = "repairs",
+                       size = 8)
+
+bi_gen_thirty_map <- plot + inset_element(bi_legend, left = 0, bottom = 0.6, right = 0.4, top = 1)
+
+bi_gen_thirty_map 
+ 
+# add vm
+var_DA_06_16_test <- 
+  var_DA_06_16_2 %>%
+  mutate(var_prop_vm_median = wtd.quantile(var_prop_vm, probs = c(.5), na.rm = TRUE))
+
+#save plot
+ggsave("output/figures/v2_map.pdf", plot = v2_map, width = 8, 
+       height = 5, units = "in", useDingbats = FALSE)
